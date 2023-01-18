@@ -21,7 +21,7 @@ export async function getVersion(
   switch (method) {
     case 'local':
       versions = links.getAvailableLocalCudaVersions()
-      cudnn_versions = links.getAvailableLocalCudnnVersions(cudnnVersionString)
+      cudnn_versions = links.getAvailableLocalCudnnVersions(cudaVersionString)
       break
     case 'network':
       switch (await getOs()) {
@@ -29,13 +29,13 @@ export async function getVersion(
           // TODO adapt this to actual available network versions for linux
           versions = links.getAvailableLocalCudaVersions()
           cudnn_versions =
-            links.getAvailableLocalCudnnVersions(cudnnVersionString)
+            links.getAvailableLocalCudnnVersions(cudaVersionString)
           break
         case OSType.windows:
           versions = (links as WindowsLinks).getAvailableNetworkCudaVersions()
           cudnn_versions = (
             links as WindowsLinks
-          ).getAvailableLocalCudnnVersions(cudnnVersionString)
+          ).getAvailableLocalCudnnVersions(cudaVersionString)
           break
       }
   }

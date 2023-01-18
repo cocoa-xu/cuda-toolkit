@@ -464,8 +464,15 @@ function installCudnn(cudnnArchivePath, cudaPath) {
                 // `C:\'${cudaPath}'` => C:\'Program Files\...'
                 cudaPath = cudaPath.substring(3);
                 cudaPath = `C:\\'${cudaPath}'`;
-                command = "powershell";
-                installArgs = ['-command', 'Expand-Archive', '-LiteralPath', cudnnArchivePath, '-DestinationPath', cudaPath];
+                command = 'powershell';
+                installArgs = [
+                    '-command',
+                    'Expand-Archive',
+                    '-LiteralPath',
+                    cudnnArchivePath,
+                    '-DestinationPath',
+                    cudaPath
+                ];
                 fileExt = (0, downloader_1.getFileExtension)(platform_1.OSType.linux, platform_1.DownloadType.cudnn);
                 break;
         }
@@ -485,11 +492,24 @@ function installCudnn(cudnnArchivePath, cudaPath) {
         switch (yield (0, platform_1.getOs)()) {
             case platform_1.OSType.linux:
                 command = `sudo bash`;
-                installArgs = ['-c', `mv "${cudaPath}/${filename}/lib/*" "${cudaPath}/lib/" && mv "${cudaPath}/${filename}/include/*" "${cudaPath}/include/"`];
+                installArgs = [
+                    '-c',
+                    `mv "${cudaPath}/${filename}/lib/*" "${cudaPath}/lib/" && mv "${cudaPath}/${filename}/include/*" "${cudaPath}/include/"`
+                ];
                 break;
             case platform_1.OSType.windows:
-                command = "powershell";
-                installArgs = ['-command', 'Get-ChildItem', '-Path', `"${cudaPath}\\${filename}\\bin/\\*.dll"`, '-Recurse', '|', 'Move-Item', '-Destination', `"${cudaPath}\\bin"`];
+                command = 'powershell';
+                installArgs = [
+                    '-command',
+                    'Get-ChildItem',
+                    '-Path',
+                    `"${cudaPath}\\${filename}\\bin/\\*.dll"`,
+                    '-Recurse',
+                    '|',
+                    'Move-Item',
+                    '-Destination',
+                    `"${cudaPath}\\bin"`
+                ];
                 break;
         }
         try {
@@ -503,8 +523,18 @@ function installCudnn(cudnnArchivePath, cudaPath) {
         }
         switch (yield (0, platform_1.getOs)()) {
             case platform_1.OSType.windows:
-                command = "powershell";
-                installArgs = ['-command', 'Get-ChildItem', '-Path', `"${cudaPath}\\${filename}\\include\\\\*.h"`, '-Recurse', '|', 'Move-Item', '-Destination', `"${cudaPath}\\include"`];
+                command = 'powershell';
+                installArgs = [
+                    '-command',
+                    'Get-ChildItem',
+                    '-Path',
+                    `"${cudaPath}\\${filename}\\include\\\\*.h"`,
+                    '-Recurse',
+                    '|',
+                    'Move-Item',
+                    '-Destination',
+                    `"${cudaPath}\\include"`
+                ];
                 try {
                     core.debug(`moving cudnn files: ${cudnnArchivePath}`);
                     const exitCode = yield (0, exec_1.exec)(command, installArgs, execOptions);
@@ -514,7 +544,17 @@ function installCudnn(cudnnArchivePath, cudaPath) {
                     core.debug(`Error during installation: ${error}`);
                     throw error;
                 }
-                installArgs = ['-command', 'Get-ChildItem', '-Path', `"${cudaPath}\\${filename}\\lib\\x64\\\\*.lib"`, '-Recurse', '|', 'Move-Item', '-Destination', `"${cudaPath}\\lib\\x64"`];
+                installArgs = [
+                    '-command',
+                    'Get-ChildItem',
+                    '-Path',
+                    `"${cudaPath}\\${filename}\\lib\\x64\\\\*.lib"`,
+                    '-Recurse',
+                    '|',
+                    'Move-Item',
+                    '-Destination',
+                    `"${cudaPath}\\lib\\x64"`
+                ];
                 try {
                     core.debug(`moving cudnn files: ${cudnnArchivePath}`);
                     const exitCode = yield (0, exec_1.exec)(command, installArgs, execOptions);
@@ -1440,7 +1480,7 @@ function getVersion(cudaVersionString, cudnnVersionString, method) {
         switch (method) {
             case 'local':
                 versions = links.getAvailableLocalCudaVersions();
-                cudnn_versions = links.getAvailableLocalCudnnVersions(cudnnVersionString);
+                cudnn_versions = links.getAvailableLocalCudnnVersions(cudaVersionString);
                 break;
             case 'network':
                 switch (yield (0, platform_1.getOs)()) {
@@ -1448,11 +1488,11 @@ function getVersion(cudaVersionString, cudnnVersionString, method) {
                         // TODO adapt this to actual available network versions for linux
                         versions = links.getAvailableLocalCudaVersions();
                         cudnn_versions =
-                            links.getAvailableLocalCudnnVersions(cudnnVersionString);
+                            links.getAvailableLocalCudnnVersions(cudaVersionString);
                         break;
                     case platform_1.OSType.windows:
                         versions = links.getAvailableNetworkCudaVersions();
-                        cudnn_versions = links.getAvailableLocalCudnnVersions(cudnnVersionString);
+                        cudnn_versions = links.getAvailableLocalCudnnVersions(cudaVersionString);
                         break;
                 }
         }
