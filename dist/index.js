@@ -263,6 +263,9 @@ function fromCacheOrDownload(toolkit, method, cacheKey, useGitHubCache, osType, 
             core.debug(`Not found in local/GitHub cache, downloading...`);
             // Get download URL
             toolkit = yield getDownloadURL(method, toolkit);
+            if (toolkit.cuda_url === undefined) {
+                throw new Error("Cannot find CUDA URL");
+            }
             // Get CUDA/cudnn installer filename extension depending on OS
             const fileExtension = getFileExtension(osType, downloadType);
             const version_string = downloadType === platform_1.DownloadType.cuda
@@ -1509,8 +1512,8 @@ function getVersion(cudaVersionString, cudnnVersionString, method) {
                 const toolkit = {
                     cuda_version: version,
                     cudnn_version: cudnn_version,
-                    cuda_url: new URL(''),
-                    cudnn_url: new URL('')
+                    cuda_url: undefined,
+                    cudnn_url: undefined
                 };
                 return toolkit;
             }

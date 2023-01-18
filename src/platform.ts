@@ -14,7 +14,7 @@ export enum DownloadType {
 
 export interface CUDAToolkit {
   cuda_version: SemVer
-  cuda_url: URL
+  cuda_url: URL | undefined
   cudnn_version: SemVer | undefined
   cudnn_url: URL | undefined
 }

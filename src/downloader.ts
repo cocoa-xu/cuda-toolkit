@@ -148,6 +148,9 @@ async function fromCacheOrDownload(
     core.debug(`Not found in local/GitHub cache, downloading...`)
     // Get download URL
     toolkit = await getDownloadURL(method, toolkit)
+    if (toolkit.cuda_url === undefined) {
+      throw new Error('Cannot find CUDA URL')
+    }
 
     // Get CUDA/cudnn installer filename extension depending on OS
     const fileExtension: String = getFileExtension(osType, downloadType)

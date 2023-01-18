@@ -51,8 +51,8 @@ export async function getVersion(
       const toolkit: CUDAToolkit = {
         cuda_version: version,
         cudnn_version: cudnn_version,
-        cuda_url: new URL(''),
-        cudnn_url: new URL('')
+        cuda_url: undefined,
+        cudnn_url: undefined
       }
       return toolkit
     } else {
