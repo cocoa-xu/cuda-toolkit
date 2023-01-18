@@ -209,6 +209,7 @@ function getFileExtension(osType, downloadType) {
                 case platform_1.OSType.linux:
                     return 'run';
             }
+            break;
         case platform_1.DownloadType.cudnn:
             switch (osType) {
                 case platform_1.OSType.windows:
@@ -219,12 +220,12 @@ function getFileExtension(osType, downloadType) {
     }
 }
 exports.getFileExtension = getFileExtension;
-function verifyCachePath(verifyCachePath, chmod) {
+function verifyCachePath(verifyPath, chmod) {
     return __awaiter(this, void 0, void 0, function* () {
         // String with full executable path
         let fullExecutablePath;
         // Get list of files in tool cache
-        const filesInCache = yield (yield glob.create(`${verifyCachePath}/**.*`)).glob();
+        const filesInCache = yield (yield glob.create(`${verifyPath}/**.*`)).glob();
         core.debug(`Files in tool cache:`);
         for (const f of filesInCache) {
             core.debug(f);
@@ -264,7 +265,7 @@ function fromCacheOrDownload(toolkit, method, cacheKey, useGitHubCache, osType, 
             // Get download URL
             toolkit = yield getDownloadURL(method, toolkit);
             if (toolkit.cuda_url === undefined) {
-                throw new Error("Cannot find CUDA URL");
+                throw new Error('Cannot find CUDA URL');
             }
             // Get CUDA/cudnn installer filename extension depending on OS
             const fileExtension = getFileExtension(osType, downloadType);
@@ -1511,7 +1512,7 @@ function getVersion(cudaVersionString, cudnnVersionString, method) {
                 core.debug(`cudnn version available: ${cudnn_version}`);
                 const toolkit = {
                     cuda_version: version,
-                    cudnn_version: cudnn_version,
+                    cudnn_version,
                     cuda_url: undefined,
                     cudnn_url: undefined
                 };

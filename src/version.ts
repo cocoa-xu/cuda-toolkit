@@ -50,7 +50,7 @@ export async function getVersion(
       core.debug(`cudnn version available: ${cudnn_version}`)
       const toolkit: CUDAToolkit = {
         cuda_version: version,
-        cudnn_version: cudnn_version,
+        cudnn_version,
         cuda_url: undefined,
         cudnn_url: undefined
       }

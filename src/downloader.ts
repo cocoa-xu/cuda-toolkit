@@ -86,6 +86,8 @@ export function getFileExtension(
         case OSType.linux:
           return 'run'
       }
+      break
+
     case DownloadType.cudnn:
       switch (osType) {
         case OSType.windows:
@@ -97,15 +99,13 @@ export function getFileExtension(
 }
 
 async function verifyCachePath(
-  verifyCachePath: string,
+  verifyPath: string,
   chmod: string | undefined
 ): Promise<string> {
   // String with full executable path
   let fullExecutablePath: string
   // Get list of files in tool cache
-  const filesInCache = await (
-    await glob.create(`${verifyCachePath}/**.*`)
-  ).glob()
+  const filesInCache = await (await glob.create(`${verifyPath}/**.*`)).glob()
   core.debug(`Files in tool cache:`)
   for (const f of filesInCache) {
     core.debug(f)
@@ -153,7 +153,7 @@ async function fromCacheOrDownload(
     }
 
     // Get CUDA/cudnn installer filename extension depending on OS
-    const fileExtension: String = getFileExtension(osType, downloadType)
+    const fileExtension: string = getFileExtension(osType, downloadType)
     const version_string =
       downloadType === DownloadType.cuda
         ? toolkit.cuda_version
