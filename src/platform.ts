@@ -1,9 +1,22 @@
 import {debug} from '@actions/core'
 import os from 'os'
+import {SemVer} from 'semver'
 
 export enum OSType {
   windows = 'windows',
   linux = 'linux'
+}
+
+export enum DownloadType {
+  cuda = 'cuda',
+  cudnn = 'cudnn'
+}
+
+export interface CUDAToolkit {
+  cuda_version: SemVer
+  cuda_url: URL
+  cudnn_version: SemVer | undefined
+  cudnn_url: URL | undefined
 }
 
 export async function getOs(): Promise<OSType> {

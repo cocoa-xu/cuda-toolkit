@@ -146,7 +146,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.download = void 0;
+exports.getFileExtension = exports.download = void 0;
 const cache = __importStar(__nccwpck_require__(7799));
 const core = __importStar(__nccwpck_require__(2186));
 const glob = __importStar(__nccwpck_require__(8090));
@@ -157,67 +157,74 @@ const windows_links_1 = __nccwpck_require__(5986);
 const fs_1 = __importDefault(__nccwpck_require__(7147));
 const get_links_1 = __nccwpck_require__(1451);
 // Download helper which returns the installer executable and caches it for next runs
-function download(version, method, useGitHubCache) {
+function download(toolkit, method, useGitHubCache) {
     return __awaiter(this, void 0, void 0, function* () {
         // First try to find tool with desired version in tool cache (local to machine)
         const toolName = 'cuda_installer';
         const osType = yield (0, platform_1.getOs)();
         const osRelease = yield (0, platform_1.getRelease)();
         const toolId = `${toolName}-${osType}-${osRelease}`;
-        const toolPath = tc.find(toolId, `${version}`);
+        const toolPath = tc.find(toolId, `${toolkit.cuda_version}`);
         // Path that contains the executable file
         let executablePath;
+        let cudnnArchivePath;
         if (toolPath) {
             // Tool is already in cache
-            core.debug(`Found in local machine cache ${toolPath}`);
+            core.debug(`Found CUDA in local machine cache ${toolPath}`);
             executablePath = toolPath;
         }
         else {
             // Second option, get tool from GitHub cache if enabled
-            const cacheKey = `${toolId}-${version}`;
-            const cachePath = cacheKey;
-            let cacheResult;
-            if (useGitHubCache) {
-                cacheResult = yield cache.restoreCache([cachePath], cacheKey);
-            }
-            if (cacheResult !== undefined) {
-                core.debug(`Found in GitHub cache ${cachePath}`);
-                executablePath = cachePath;
+            const cacheKey = `${toolId}-${toolkit.cuda_version}`;
+            executablePath = yield fromCacheOrDownload(toolkit, method, cacheKey, useGitHubCache, osType, toolId, platform_1.DownloadType.cuda);
+        }
+        if (toolkit.cudnn_version !== undefined) {
+            const cudnnPath = tc.find(toolId, `${toolkit.cudnn_version}`);
+            if (cudnnPath) {
+                // Tool is already in cache
+                core.debug(`Found cudnn in local machine cache ${cudnnPath}`);
+                cudnnArchivePath = cudnnPath;
             }
             else {
-                // Final option, download tool from NVIDIA servers
-                core.debug(`Not found in local/GitHub cache, downloading...`);
-                // Get download URL
-                const url = yield getDownloadURL(method, version);
-                // Get intsaller filename extension depending on OS
-                const fileExtension = getFileExtension(osType);
-                const destFileName = `${toolId}_${version}.${fileExtension}`;
-                // Download executable
-                const downloadPath = yield tc.downloadTool(url.toString(), destFileName);
-                // Copy file to GitHub cachePath
-                core.debug(`Copying ${destFileName} to ${cachePath}`);
-                yield io.mkdirP(cachePath);
-                yield io.cp(destFileName, cachePath);
-                // Cache download to local machine cache
-                const localCachePath = yield tc.cacheFile(downloadPath, destFileName, `${toolName}-${osType}`, `${version}`);
-                core.debug(`Cached download to local machine cache at ${localCachePath}`);
-                // Cache download to GitHub cache if enabled
-                if (useGitHubCache) {
-                    const cacheId = yield cache.saveCache([cachePath], cacheKey);
-                    if (cacheId !== -1) {
-                        core.debug(`Cached download to GitHub cache with cache id ${cacheId}`);
-                    }
-                    else {
-                        core.debug(`Did not cache, cache possibly already exists`);
-                    }
-                }
-                executablePath = localCachePath;
+                const cudnnCacheKey = `${toolId}-${toolkit.cudnn_version}`;
+                cudnnArchivePath = yield fromCacheOrDownload(toolkit, method, cudnnCacheKey, useGitHubCache, osType, toolId, platform_1.DownloadType.cudnn);
             }
         }
         // String with full executable path
+        const fullExecutablePath = yield verifyCachePath(executablePath, '0755');
+        let fullArchivedPath;
+        if (cudnnArchivePath !== undefined) {
+            fullArchivedPath = yield verifyCachePath(cudnnArchivePath, undefined);
+        }
+        return [fullExecutablePath, fullArchivedPath];
+    });
+}
+exports.download = download;
+function getFileExtension(osType, downloadType) {
+    switch (downloadType) {
+        case platform_1.DownloadType.cuda:
+            switch (osType) {
+                case platform_1.OSType.windows:
+                    return 'exe';
+                case platform_1.OSType.linux:
+                    return 'run';
+            }
+        case platform_1.DownloadType.cudnn:
+            switch (osType) {
+                case platform_1.OSType.windows:
+                    return 'zip';
+                case platform_1.OSType.linux:
+                    return 'tar.xz';
+            }
+    }
+}
+exports.getFileExtension = getFileExtension;
+function verifyCachePath(verifyCachePath, chmod) {
+    return __awaiter(this, void 0, void 0, function* () {
+        // String with full executable path
         let fullExecutablePath;
         // Get list of files in tool cache
-        const filesInCache = yield (yield glob.create(`${executablePath}/**.*`)).glob();
+        const filesInCache = yield (yield glob.create(`${verifyCachePath}/**.*`)).glob();
         core.debug(`Files in tool cache:`);
         for (const f of filesInCache) {
             core.debug(f);
@@ -232,35 +239,79 @@ function download(version, method, useGitHubCache) {
             fullExecutablePath = filesInCache[0];
         }
         // Make file executable on linux
-        if ((yield (0, platform_1.getOs)()) === platform_1.OSType.linux) {
+        if ((yield (0, platform_1.getOs)()) === platform_1.OSType.linux && chmod !== undefined) {
             // 0755 octal notation permission is: owner(r,w,x), group(r,w,x), other(r,x) where r=read, w=write, x=execute
-            yield fs_1.default.promises.chmod(fullExecutablePath, '0755');
+            yield fs_1.default.promises.chmod(fullExecutablePath, chmod);
         }
-        // Return full executable path
         return fullExecutablePath;
     });
 }
-exports.download = download;
-function getFileExtension(osType) {
-    switch (osType) {
-        case platform_1.OSType.windows:
-            return 'exe';
-        case platform_1.OSType.linux:
-            return 'run';
-    }
+function fromCacheOrDownload(toolkit, method, cacheKey, useGitHubCache, osType, toolId, downloadType) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const toolName = 'cuda_installer';
+        const cachePath = cacheKey;
+        let cacheResult;
+        if (useGitHubCache) {
+            cacheResult = yield cache.restoreCache([cachePath], cacheKey);
+        }
+        if (cacheResult !== undefined) {
+            core.debug(`Found in GitHub cache ${cachePath}`);
+            return cachePath;
+        }
+        else {
+            // Final option, download tool from NVIDIA servers
+            core.debug(`Not found in local/GitHub cache, downloading...`);
+            // Get download URL
+            toolkit = yield getDownloadURL(method, toolkit);
+            // Get CUDA/cudnn installer filename extension depending on OS
+            const fileExtension = getFileExtension(osType, downloadType);
+            const version_string = downloadType === platform_1.DownloadType.cuda
+                ? toolkit.cuda_version
+                : toolkit.cudnn_version;
+            const destFileName = `${toolId}_${version_string}.${fileExtension}`;
+            // Download executable
+            const downloadPath = yield tc.downloadTool(toolkit.cuda_url.toString(), destFileName);
+            // Copy file to GitHub cachePath
+            core.debug(`Copying ${destFileName} to ${cachePath}`);
+            yield io.mkdirP(cachePath);
+            yield io.cp(destFileName, cachePath);
+            // Cache download to local machine cache
+            const localCachePath = yield tc.cacheFile(downloadPath, destFileName, `${toolName}-${osType}`, `${version_string}`);
+            core.debug(`Cached download to local machine cache at ${localCachePath}`);
+            // Cache download to GitHub cache if enabled
+            if (useGitHubCache) {
+                const cacheId = yield cache.saveCache([cachePath], cacheKey);
+                if (cacheId !== -1) {
+                    core.debug(`Cached CUDA/cudnn installer download to GitHub cache with cache id ${cacheId}`);
+                }
+                else {
+                    core.debug(`Did not cache, cache possibly already exists`);
+                }
+            }
+            return localCachePath;
+        }
+    });
 }
-function getDownloadURL(method, version) {
+function getDownloadURL(method, toolkit) {
     return __awaiter(this, void 0, void 0, function* () {
         const links = yield (0, get_links_1.getLinks)();
         switch (method) {
             case 'local':
-                return links.getLocalURLFromCudaVersion(version);
+                toolkit.cuda_url = links.getLocalURLFromCudaVersion(toolkit.cuda_version);
+                if (toolkit.cudnn_version !== undefined) {
+                    toolkit.cudnn_url = links.getLocalURLFromCudnnVersion(toolkit.cudnn_version);
+                }
+                return toolkit;
             case 'network':
                 if (!(links instanceof windows_links_1.WindowsLinks)) {
                     core.debug(`Tried to get windows links but got linux links instance`);
                     throw new Error(`Network mode is not supported by linux, shouldn't even get here`);
                 }
-                return links.getNetworkURLFromCudaVersion(version);
+                toolkit.cuda_url = links.getNetworkURLFromCudaVersion(toolkit.cuda_version);
+                if (toolkit.cudnn_version !== undefined) {
+                    toolkit.cudnn_url = links.getLocalURLFromCudnnVersion(toolkit.cudnn_version);
+                }
+                return toolkit;
             default:
                 throw new Error(`Invalid method: expected either 'local' or 'network', got '${method}'`);
         }
@@ -308,12 +359,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.install = void 0;
+exports.installCudnn = exports.install = void 0;
 const artifact = __importStar(__nccwpck_require__(2605));
 const core = __importStar(__nccwpck_require__(2186));
 const platform_1 = __nccwpck_require__(9238);
 const exec_1 = __nccwpck_require__(1514);
-function install(executablePath, version, subPackagesArray, linuxLocalArgsArray) {
+const downloader_1 = __nccwpck_require__(5587);
+const path = __nccwpck_require__(1017);
+function install(executablePath, toolkit, subPackagesArray, linuxLocalArgsArray) {
     return __awaiter(this, void 0, void 0, function* () {
         // Install arguments, see: https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#runfile-advanced
         // and https://docs.nvidia.com/cuda/cuda-installation-guide-microsoft-windows/index.html
@@ -333,6 +386,7 @@ function install(executablePath, version, subPackagesArray, linuxLocalArgsArray)
                 }
             }
         };
+        const version = toolkit.cuda_version;
         // Configure OS dependent run command and args
         switch (yield (0, platform_1.getOs)()) {
             case platform_1.OSType.linux:
@@ -356,7 +410,7 @@ function install(executablePath, version, subPackagesArray, linuxLocalArgsArray)
                 }));
                 break;
         }
-        // Run installer
+        // Run CUDA installer
         try {
             core.debug(`Running install executable: ${executablePath}`);
             const exitCode = yield (0, exec_1.exec)(command, installArgs, execOptions);
@@ -383,6 +437,98 @@ function install(executablePath, version, subPackagesArray, linuxLocalArgsArray)
     });
 }
 exports.install = install;
+function installCudnn(cudnnArchivePath, cudaPath) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let installArgs;
+        let command;
+        let fileExt;
+        const execOptions = {
+            listeners: {
+                stdout: (data) => {
+                    core.debug(data.toString());
+                },
+                stderr: (data) => {
+                    core.debug(`Error: ${data.toString()}`);
+                }
+            }
+        };
+        switch (yield (0, platform_1.getOs)()) {
+            case platform_1.OSType.linux:
+                command = `sudo tar`;
+                installArgs = ['-xf', cudnnArchivePath, '-C', cudaPath];
+                fileExt = (0, downloader_1.getFileExtension)(platform_1.OSType.linux, platform_1.DownloadType.cudnn);
+                break;
+            case platform_1.OSType.windows:
+                // C:\Program Files\...
+                // Program Files\...
+                // `C:\'${cudaPath}'` => C:\'Program Files\...'
+                cudaPath = cudaPath.substring(3);
+                cudaPath = `C:\\'${cudaPath}'`;
+                command = "powershell";
+                installArgs = ['-command', 'Expand-Archive', '-LiteralPath', cudnnArchivePath, '-DestinationPath', cudaPath];
+                fileExt = (0, downloader_1.getFileExtension)(platform_1.OSType.linux, platform_1.DownloadType.cudnn);
+                break;
+        }
+        // unarchive cudnn to CUDA directory
+        try {
+            core.debug(`Unarchiving cudnn files: ${cudnnArchivePath}`);
+            const exitCode = yield (0, exec_1.exec)(command, installArgs, execOptions);
+            core.debug(`exit code: ${exitCode}`);
+        }
+        catch (error) {
+            core.debug(`Error during installation: ${error}`);
+            throw error;
+        }
+        let filename = path.basename(cudnnArchivePath);
+        filename = filename.substring(0, filename.lastIndexOf(fileExt));
+        // move everything unarchived
+        switch (yield (0, platform_1.getOs)()) {
+            case platform_1.OSType.linux:
+                command = `sudo bash`;
+                installArgs = ['-c', `mv "${cudaPath}/${filename}/lib/*" "${cudaPath}/lib/" && mv "${cudaPath}/${filename}/include/*" "${cudaPath}/include/"`];
+                break;
+            case platform_1.OSType.windows:
+                command = "powershell";
+                installArgs = ['-command', 'Get-ChildItem', '-Path', `"${cudaPath}\\${filename}\\bin/\\*.dll"`, '-Recurse', '|', 'Move-Item', '-Destination', `"${cudaPath}\\bin"`];
+                break;
+        }
+        try {
+            core.debug(`moving cudnn files: ${cudnnArchivePath}`);
+            const exitCode = yield (0, exec_1.exec)(command, installArgs, execOptions);
+            core.debug(`exit code: ${exitCode}`);
+        }
+        catch (error) {
+            core.debug(`Error during installation: ${error}`);
+            throw error;
+        }
+        switch (yield (0, platform_1.getOs)()) {
+            case platform_1.OSType.windows:
+                command = "powershell";
+                installArgs = ['-command', 'Get-ChildItem', '-Path', `"${cudaPath}\\${filename}\\include\\\\*.h"`, '-Recurse', '|', 'Move-Item', '-Destination', `"${cudaPath}\\include"`];
+                try {
+                    core.debug(`moving cudnn files: ${cudnnArchivePath}`);
+                    const exitCode = yield (0, exec_1.exec)(command, installArgs, execOptions);
+                    core.debug(`exit code: ${exitCode}`);
+                }
+                catch (error) {
+                    core.debug(`Error during installation: ${error}`);
+                    throw error;
+                }
+                installArgs = ['-command', 'Get-ChildItem', '-Path', `"${cudaPath}\\${filename}\\lib\\x64\\\\*.lib"`, '-Recurse', '|', 'Move-Item', '-Destination', `"${cudaPath}\\lib\\x64"`];
+                try {
+                    core.debug(`moving cudnn files: ${cudnnArchivePath}`);
+                    const exitCode = yield (0, exec_1.exec)(command, installArgs, execOptions);
+                    core.debug(`exit code: ${exitCode}`);
+                }
+                catch (error) {
+                    core.debug(`Error during installation: ${error}`);
+                    throw error;
+                }
+                break;
+        }
+    });
+}
+exports.installCudnn = installCudnn;
 
 
 /***/ }),
@@ -435,9 +581,13 @@ const semver_1 = __nccwpck_require__(1383);
 class AbstractLinks {
     constructor() {
         this.cudaVersionToURL = new Map();
+        this.cudnnVersionData = new Map();
     }
     getAvailableLocalCudaVersions() {
         return Array.from(this.cudaVersionToURL.keys()).map(s => new semver_1.SemVer(s));
+    }
+    getAvailableLocalCudnnVersions(cuda_version) {
+        return Array.from(this.compatibleCudnnVersions(cuda_version).keys()).map(s => new semver_1.SemVer(s));
     }
     getLocalURLFromCudaVersion(version) {
         const urlString = this.cudaVersionToURL.get(`${version}`);
@@ -445,6 +595,35 @@ class AbstractLinks {
             throw new Error(`Invalid version: ${version}`);
         }
         return new URL(urlString);
+    }
+    getLocalURLFromCudnnVersion(version) {
+        const metadata = this.cudnnVersionData.get(`${version}`);
+        if (metadata === undefined) {
+            return undefined;
+        }
+        return new URL(metadata[0]);
+    }
+    compatibleCudnnVersions(cuda_version) {
+        const compatible_versions = Array.from(this.cudnnVersionData.keys()).reduce((acc, v) => {
+            const metadata = this.cudnnVersionData.get(v);
+            if (metadata !== undefined) {
+                const [url, cur_compatible_versions] = metadata;
+                const compatible = cur_compatible_versions.filter(c => {
+                    const cv = new semver_1.SemVer(c, true);
+                    if (cv.patch === 0 && cv.minor === 0) {
+                        return cv.compareMain(cuda_version) === 0;
+                    }
+                    else {
+                        return cv.compare(cuda_version) !== 1;
+                    }
+                }).length > 0;
+                if (compatible) {
+                    acc.set(v, url);
+                }
+            }
+            return acc;
+        }, new Map());
+        return compatible_versions;
     }
 }
 exports.AbstractLinks = AbstractLinks;
@@ -467,6 +646,15 @@ class LinuxLinks extends links_1.AbstractLinks {
     // Private constructor to prevent instantiation
     constructor() {
         super();
+        this.cudnnVersionData = new Map([
+            [
+                '8.7.0',
+                [
+                    'https://developer.nvidia.com/downloads/c118-cudnn-linux-8664-87084cuda11-archivetarz',
+                    ['11.0.0']
+                ]
+            ]
+        ]);
         // Map of cuda SemVer version to download URL
         this.cudaVersionToURL = new Map([
             [
@@ -704,6 +892,15 @@ class WindowsLinks extends links_1.AbstractLinks {
                 'https://developer.nvidia.com/compute/cuda/8.0/Prod2/network_installers/cuda_8.0.61_win10_network-exe'
             ]
         ]);
+        this.cudnnVersionData = new Map([
+            [
+                '8.7.0',
+                [
+                    'https://developer.nvidia.com/downloads/c118-cudnn-windows-8664-87084cuda11-archivezip',
+                    ['11.0.0']
+                ]
+            ]
+        ]);
         // Map of cuda SemVer version to download URL
         this.cudaVersionToURL = new Map([
             [
@@ -874,6 +1071,8 @@ function run() {
         try {
             const cuda = core.getInput('cuda');
             core.debug(`Desired cuda version: ${cuda}`);
+            const cudnn = core.getInput('cudnn');
+            core.debug(`Desired cudnn version: ${cudnn}`);
             const subPackages = core.getInput('sub-packages');
             core.debug(`Desired subPackes: ${subPackages}`);
             const methodString = core.getInput('method');
@@ -897,7 +1096,7 @@ function run() {
             const methodParsed = (0, method_1.parseMethod)(methodString);
             core.debug(`Parsed method: ${methodParsed}`);
             // Parse version string
-            const version = yield (0, version_1.getVersion)(cuda, methodParsed);
+            const cuda_toolkit = yield (0, version_1.getVersion)(cuda, cudnn, methodParsed);
             // Parse linuxLocalArgs array
             let linuxLocalArgsArray = [];
             try {
@@ -917,24 +1116,29 @@ function run() {
             }
             // Linux network install (uses apt repository)
             const useAptInstall = yield (0, apt_installer_1.useApt)(methodParsed);
+            let cudnnArchivePath;
             if (useAptInstall) {
                 // Setup aptitude repos
-                yield (0, apt_installer_1.aptSetup)(version);
+                yield (0, apt_installer_1.aptSetup)(cuda_toolkit.cuda_version);
                 // Install packages
-                const installResult = yield (0, apt_installer_1.aptInstall)(version, subPackagesArray);
+                const installResult = yield (0, apt_installer_1.aptInstall)(cuda_toolkit.cuda_version, subPackagesArray);
                 core.debug(`Install result: ${installResult}`);
             }
             else {
                 // Download
-                const executablePath = yield (0, downloader_1.download)(version, methodParsed, useGitHubCache);
-                // Install
-                yield (0, installer_1.install)(executablePath, version, subPackagesArray, linuxLocalArgsArray);
+                const [executablePath, archivePath] = yield (0, downloader_1.download)(cuda_toolkit, methodParsed, useGitHubCache);
+                // Install CUDA
+                yield (0, installer_1.install)(executablePath, cuda_toolkit, subPackagesArray, linuxLocalArgsArray);
+                cudnnArchivePath = archivePath;
             }
             // Add CUDA environment variables to GitHub environment variables
-            const cudaPath = yield (0, update_path_1.updatePath)(version);
+            const cudaPath = yield (0, update_path_1.updatePath)(cuda_toolkit.cuda_version);
             // Set output variables
             core.setOutput('cuda', cuda);
             core.setOutput('CUDA_PATH', cudaPath);
+            if (cudnnArchivePath !== undefined) {
+                yield (0, installer_1.installCudnn)(cudnnArchivePath, cudaPath);
+            }
         }
         catch (error) {
             if (error instanceof Error) {
@@ -991,7 +1195,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getRelease = exports.getOs = exports.OSType = void 0;
+exports.getRelease = exports.getOs = exports.DownloadType = exports.OSType = void 0;
 const core_1 = __nccwpck_require__(2186);
 const os_1 = __importDefault(__nccwpck_require__(2037));
 var OSType;
@@ -999,6 +1203,11 @@ var OSType;
     OSType["windows"] = "windows";
     OSType["linux"] = "linux";
 })(OSType = exports.OSType || (exports.OSType = {}));
+var DownloadType;
+(function (DownloadType) {
+    DownloadType["cuda"] = "cuda";
+    DownloadType["cudnn"] = "cudnn";
+})(DownloadType = exports.DownloadType || (exports.DownloadType = {}));
 function getOs() {
     return __awaiter(this, void 0, void 0, function* () {
         const osPlatform = os_1.default.platform();
@@ -1221,34 +1430,54 @@ const platform_1 = __nccwpck_require__(9238);
 const semver_1 = __nccwpck_require__(1383);
 const get_links_1 = __nccwpck_require__(1451);
 // Helper for converting string to SemVer and verifying it exists in the links
-function getVersion(versionString, method) {
+function getVersion(cudaVersionString, cudnnVersionString, method) {
     return __awaiter(this, void 0, void 0, function* () {
-        const version = new semver_1.SemVer(versionString);
+        const version = new semver_1.SemVer(cudaVersionString);
+        const cudnn_version = new semver_1.SemVer(cudnnVersionString);
         const links = yield (0, get_links_1.getLinks)();
         let versions;
+        let cudnn_versions;
         switch (method) {
             case 'local':
                 versions = links.getAvailableLocalCudaVersions();
+                cudnn_versions = links.getAvailableLocalCudnnVersions(cudnnVersionString);
                 break;
             case 'network':
                 switch (yield (0, platform_1.getOs)()) {
                     case platform_1.OSType.linux:
                         // TODO adapt this to actual available network versions for linux
                         versions = links.getAvailableLocalCudaVersions();
+                        cudnn_versions =
+                            links.getAvailableLocalCudnnVersions(cudnnVersionString);
                         break;
                     case platform_1.OSType.windows:
                         versions = links.getAvailableNetworkCudaVersions();
+                        cudnn_versions = links.getAvailableLocalCudnnVersions(cudnnVersionString);
                         break;
                 }
         }
-        core.debug(`Available versions: ${versions}`);
+        core.debug(`Available CUDA versions: ${versions}`);
+        core.debug(`Available cudnn versions: ${cudnn_versions}`);
         if (versions.find(v => v.compare(version) === 0) !== undefined) {
-            core.debug(`Version available: ${version}`);
-            return version;
+            core.debug(`CUDA Version available: ${version}`);
+            if (cudnn_versions.find(vv => vv.compare(cudnn_version) === 0) !== undefined) {
+                core.debug(`cudnn version available: ${cudnn_version}`);
+                const toolkit = {
+                    cuda_version: version,
+                    cudnn_version: cudnn_version,
+                    cuda_url: new URL(''),
+                    cudnn_url: new URL('')
+                };
+                return toolkit;
+            }
+            else {
+                core.debug(`Version not available error!`);
+                throw new Error(`Cudnn version not available: ${version}`);
+            }
         }
         else {
             core.debug(`Version not available error!`);
-            throw new Error(`Version not available: ${version}`);
+            throw new Error(`CUDA version not available: ${version}`);
         }
     });
 }

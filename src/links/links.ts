@@ -3,9 +3,16 @@ import {SemVer} from 'semver'
 // Interface for getting cuda versions and corresponding download URLs
 export abstract class AbstractLinks {
   protected cudaVersionToURL: Map<string, string> = new Map()
+  protected cudnnVersionData: Map<string, [string, string[]]> = new Map()
 
   getAvailableLocalCudaVersions(): SemVer[] {
     return Array.from(this.cudaVersionToURL.keys()).map(s => new SemVer(s))
+  }
+
+  getAvailableLocalCudnnVersions(cuda_version: string): SemVer[] {
+    return Array.from(this.compatibleCudnnVersions(cuda_version).keys()).map(
+      s => new SemVer(s)
+    )
   }
 
   getLocalURLFromCudaVersion(version: SemVer): URL {
@@ -14,5 +21,38 @@ export abstract class AbstractLinks {
       throw new Error(`Invalid version: ${version}`)
     }
     return new URL(urlString)
+  }
+
+  getLocalURLFromCudnnVersion(version: SemVer): URL | undefined {
+    const metadata = this.cudnnVersionData.get(`${version}`)
+    if (metadata === undefined) {
+      return undefined
+    }
+    return new URL(metadata[0])
+  }
+
+  compatibleCudnnVersions(cuda_version: string): Map<string, string> {
+    const compatible_versions = Array.from(this.cudnnVersionData.keys()).reduce<
+      Map<string, string>
+    >((acc, v) => {
+      const metadata = this.cudnnVersionData.get(v)
+      if (metadata !== undefined) {
+        const [url, cur_compatible_versions] = metadata
+        const compatible =
+          cur_compatible_versions.filter(c => {
+            const cv = new SemVer(c, true)
+            if (cv.patch === 0 && cv.minor === 0) {
+              return cv.compareMain(cuda_version) === 0
+            } else {
+              return cv.compare(cuda_version) !== 1
+            }
+          }).length > 0
+        if (compatible) {
+          acc.set(v, url)
+        }
+      }
+      return acc
+    }, new Map())
+    return compatible_versions
   }
 }

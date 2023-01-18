@@ -10,6 +10,15 @@ export class LinuxLinks extends AbstractLinks {
   // Private constructor to prevent instantiation
   private constructor() {
     super()
+    this.cudnnVersionData = new Map([
+      [
+        '8.7.0',
+        [
+          'https://developer.nvidia.com/downloads/c118-cudnn-linux-8664-87084cuda11-archivetarz',
+          ['11.0.0']
+        ]
+      ]
+    ])
     // Map of cuda SemVer version to download URL
     this.cudaVersionToURL = new Map([
       [
