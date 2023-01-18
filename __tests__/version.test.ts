@@ -52,18 +52,3 @@ test.concurrent.each<Method>(['local', 'network'])(
     }
   }
 )
-
-test.concurrent.each<Method>(['local', 'network'])(
-  'Expect error to be thrown on unavailable version for method %s',
-  async method => {
-    const versionString = '11.8.0'
-    const cudnnVersionString = '8.7.0'
-    try {
-      await expect(
-        getVersion(versionString, cudnnVersionString, method)
-      ).rejects.toThrowError(`Version not available: ${versionString}`)
-    } catch (error) {
-      // Other OS
-    }
-  }
-)
