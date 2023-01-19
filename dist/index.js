@@ -470,7 +470,7 @@ function installCudnn(cudnnArchivePath, cudaPath) {
                     '-command',
                     'Expand-Archive',
                     '-LiteralPath',
-                    cudnnArchivePath,
+                    `"${cudnnArchivePath}"`,
                     '-DestinationPath',
                     cudaPath
                 ];

@@ -119,7 +119,7 @@ export async function installCudnn(
         '-command',
         'Expand-Archive',
         '-LiteralPath',
-        cudnnArchivePath,
+        `"${cudnnArchivePath}"`,
         '-DestinationPath',
         cudaPath
       ]
