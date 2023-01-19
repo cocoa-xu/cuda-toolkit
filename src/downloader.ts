@@ -36,6 +36,7 @@ export async function download(
     // Second option, get tool from GitHub cache if enabled
     const cacheKey = `${toolId}-${toolkit.cuda_version}`
     executablePath = await fromCacheOrDownload(
+      toolName,
       toolkit,
       method,
       cacheKey,
@@ -55,6 +56,7 @@ export async function download(
     } else {
       const cudnnCacheKey = `${cudnnToolId}-${toolkit.cudnn_version}`
       cudnnArchivePath = await fromCacheOrDownload(
+        cudnnToolName,
         toolkit,
         method,
         cudnnCacheKey,
@@ -128,6 +130,7 @@ async function verifyCachePath(
 }
 
 async function fromCacheOrDownload(
+  toolName: string,
   toolkit: CUDAToolkit,
   method: Method,
   cacheKey: string,
@@ -136,7 +139,6 @@ async function fromCacheOrDownload(
   toolId: string,
   downloadType: DownloadType
 ): Promise<string> {
-  const toolName = 'cuda_installer'
   const cachePath = cacheKey
   let cacheResult: string | undefined
   if (useGitHubCache) {

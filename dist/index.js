@@ -178,7 +178,7 @@ function download(toolkit, method, useGitHubCache) {
         else {
             // Second option, get tool from GitHub cache if enabled
             const cacheKey = `${toolId}-${toolkit.cuda_version}`;
-            executablePath = yield fromCacheOrDownload(toolkit, method, cacheKey, useGitHubCache, osType, toolId, platform_1.DownloadType.cuda);
+            executablePath = yield fromCacheOrDownload(toolName, toolkit, method, cacheKey, useGitHubCache, osType, toolId, platform_1.DownloadType.cuda);
         }
         if (toolkit.cudnn_version !== undefined) {
             const cudnnPath = tc.find(cudnnToolId, `${toolkit.cudnn_version}`);
@@ -189,7 +189,7 @@ function download(toolkit, method, useGitHubCache) {
             }
             else {
                 const cudnnCacheKey = `${cudnnToolId}-${toolkit.cudnn_version}`;
-                cudnnArchivePath = yield fromCacheOrDownload(toolkit, method, cudnnCacheKey, useGitHubCache, osType, cudnnToolId, platform_1.DownloadType.cudnn);
+                cudnnArchivePath = yield fromCacheOrDownload(cudnnToolName, toolkit, method, cudnnCacheKey, useGitHubCache, osType, cudnnToolId, platform_1.DownloadType.cudnn);
             }
         }
         // String with full executable path
@@ -249,9 +249,8 @@ function verifyCachePath(verifyPath, chmod) {
         return fullExecutablePath;
     });
 }
-function fromCacheOrDownload(toolkit, method, cacheKey, useGitHubCache, osType, toolId, downloadType) {
+function fromCacheOrDownload(toolName, toolkit, method, cacheKey, useGitHubCache, osType, toolId, downloadType) {
     return __awaiter(this, void 0, void 0, function* () {
-        const toolName = 'cuda_installer';
         const cachePath = cacheKey;
         let cacheResult;
         if (useGitHubCache) {
