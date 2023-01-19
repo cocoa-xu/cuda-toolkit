@@ -500,7 +500,7 @@ function installCudnn(cudnnArchivePath, cudaPath) {
             }
         });
         let filename = path.basename(cudnnArchivePath);
-        filename = filename.substring(0, filename.lastIndexOf(fileExt));
+        filename = filename.substring(0, filename.lastIndexOf(fileExt) - 1);
         // move everything unarchived
         switch (yield (0, platform_1.getOs)()) {
             case platform_1.OSType.linux:

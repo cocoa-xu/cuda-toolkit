@@ -150,7 +150,7 @@ export async function installCudnn(
   })
 
   let filename: string = path.basename(cudnnArchivePath)
-  filename = filename.substring(0, filename.lastIndexOf(fileExt))
+  filename = filename.substring(0, filename.lastIndexOf(fileExt) - 1)
   // move everything unarchived
   switch (await getOs()) {
     case OSType.linux:
