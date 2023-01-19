@@ -476,7 +476,7 @@ function installCudnn(cudnnArchivePath, cudaPath) {
                     '-DestinationPath',
                     `"${cudaPath}"`
                 ];
-                fileExt = (0, downloader_1.getFileExtension)(platform_1.OSType.linux, platform_1.DownloadType.cudnn);
+                fileExt = (0, downloader_1.getFileExtension)(platform_1.OSType.windows, platform_1.DownloadType.cudnn);
                 break;
         }
         // unarchive cudnn to CUDA directory
