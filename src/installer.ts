@@ -121,7 +121,7 @@ export async function installCudnn(
         '-LiteralPath',
         `"${cudnnArchivePath}"`,
         '-DestinationPath',
-        cudaPath
+        `"${cudaPath}"`
       ]
       fileExt = getFileExtension(OSType.linux, DownloadType.cudnn)
       break

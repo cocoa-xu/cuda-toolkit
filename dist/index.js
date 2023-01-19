@@ -472,7 +472,7 @@ function installCudnn(cudnnArchivePath, cudaPath) {
                     '-LiteralPath',
                     `"${cudnnArchivePath}"`,
                     '-DestinationPath',
-                    cudaPath
+                    `"${cudaPath}"`
                 ];
                 fileExt = (0, downloader_1.getFileExtension)(platform_1.OSType.linux, platform_1.DownloadType.cudnn);
                 break;
