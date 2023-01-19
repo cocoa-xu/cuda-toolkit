@@ -371,6 +371,7 @@ const core = __importStar(__nccwpck_require__(2186));
 const platform_1 = __nccwpck_require__(9238);
 const exec_1 = __nccwpck_require__(1514);
 const downloader_1 = __nccwpck_require__(5587);
+const fs = __importStar(__nccwpck_require__(7147));
 const path = __nccwpck_require__(1017);
 function install(executablePath, toolkit, subPackagesArray, linuxLocalArgsArray) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -439,6 +440,7 @@ function install(executablePath, toolkit, subPackagesArray, linuxLocalArgsArray)
                 const uploadResult = yield artifactClient.uploadArtifact(artifactName, files, rootDirectory, artifactOptions);
                 core.debug(`Upload result: ${uploadResult}`);
             }
+            fs.rm(executablePath, () => { });
         }
     });
 }
@@ -487,6 +489,7 @@ function installCudnn(cudnnArchivePath, cudaPath) {
             core.debug(`Error during installation: ${error}`);
             throw error;
         }
+        fs.rm(cudnnArchivePath, () => { });
         let filename = path.basename(cudnnArchivePath);
         filename = filename.substring(0, filename.lastIndexOf(fileExt));
         // move everything unarchived

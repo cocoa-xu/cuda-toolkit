@@ -3,6 +3,7 @@ import * as core from '@actions/core'
 import {OSType, getOs, CUDAToolkit, DownloadType} from './platform'
 import {exec} from '@actions/exec'
 import {getFileExtension} from './downloader'
+import * as fs from 'fs'
 const path = require('path')
 
 export async function install(
@@ -86,6 +87,7 @@ export async function install(
       )
       core.debug(`Upload result: ${uploadResult}`)
     }
+    fs.rm(executablePath, () => {})
   }
 }
 
@@ -136,6 +138,7 @@ export async function installCudnn(
     core.debug(`Error during installation: ${error}`)
     throw error
   }
+  fs.rm(cudnnArchivePath, () => {})
 
   let filename: string = path.basename(cudnnArchivePath)
   filename = filename.substring(0, filename.lastIndexOf(fileExt))
