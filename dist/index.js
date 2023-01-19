@@ -189,7 +189,7 @@ function download(toolkit, method, useGitHubCache) {
             }
             else {
                 const cudnnCacheKey = `${cudnnToolId}-${toolkit.cudnn_version}`;
-                cudnnArchivePath = yield fromCacheOrDownload(toolkit, method, cudnnCacheKey, useGitHubCache, osType, toolId, platform_1.DownloadType.cudnn);
+                cudnnArchivePath = yield fromCacheOrDownload(toolkit, method, cudnnCacheKey, useGitHubCache, osType, cudnnToolId, platform_1.DownloadType.cudnn);
             }
         }
         // String with full executable path
@@ -372,7 +372,7 @@ const platform_1 = __nccwpck_require__(9238);
 const exec_1 = __nccwpck_require__(1514);
 const downloader_1 = __nccwpck_require__(5587);
 const fs = __importStar(__nccwpck_require__(7147));
-const path = __nccwpck_require__(1017);
+const path = __importStar(__nccwpck_require__(1017));
 function install(executablePath, toolkit, subPackagesArray, linuxLocalArgsArray) {
     return __awaiter(this, void 0, void 0, function* () {
         // Install arguments, see: https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#runfile-advanced
@@ -440,7 +440,11 @@ function install(executablePath, toolkit, subPackagesArray, linuxLocalArgsArray)
                 const uploadResult = yield artifactClient.uploadArtifact(artifactName, files, rootDirectory, artifactOptions);
                 core.debug(`Upload result: ${uploadResult}`);
             }
-            fs.rm(executablePath, () => { });
+            fs.rm(executablePath, err => {
+                if (err !== undefined) {
+                    throw err;
+                }
+            });
         }
     });
 }
@@ -474,7 +478,8 @@ function installCudnn(cudnnArchivePath, cudaPath) {
                     '-LiteralPath',
                     `"${cudnnArchivePath}"`,
                     '-DestinationPath',
-                    `"${cudaPath}"`
+                    `"${cudaPath}"`,
+                    '-force'
                 ];
                 fileExt = (0, downloader_1.getFileExtension)(platform_1.OSType.windows, platform_1.DownloadType.cudnn);
                 break;
@@ -489,7 +494,11 @@ function installCudnn(cudnnArchivePath, cudaPath) {
             core.debug(`Error during installation: ${error}`);
             throw error;
         }
-        fs.rm(cudnnArchivePath, () => { });
+        fs.rm(cudnnArchivePath, err => {
+            if (err !== undefined) {
+                throw err;
+            }
+        });
         let filename = path.basename(cudnnArchivePath);
         filename = filename.substring(0, filename.lastIndexOf(fileExt));
         // move everything unarchived
@@ -512,7 +521,8 @@ function installCudnn(cudnnArchivePath, cudaPath) {
                     '|',
                     'Move-Item',
                     '-Destination',
-                    `"${cudaPath}\\bin"`
+                    `"${cudaPath}\\bin"`,
+                    '-force'
                 ];
                 break;
         }
@@ -537,7 +547,8 @@ function installCudnn(cudnnArchivePath, cudaPath) {
                     '|',
                     'Move-Item',
                     '-Destination',
-                    `"${cudaPath}\\include"`
+                    `"${cudaPath}\\include"`,
+                    '-force'
                 ];
                 try {
                     core.debug(`moving cudnn files: ${cudnnArchivePath}`);
@@ -557,7 +568,8 @@ function installCudnn(cudnnArchivePath, cudaPath) {
                     '|',
                     'Move-Item',
                     '-Destination',
-                    `"${cudaPath}\\lib\\x64"`
+                    `"${cudaPath}\\lib\\x64"`,
+                    '-force'
                 ];
                 try {
                     core.debug(`moving cudnn files: ${cudnnArchivePath}`);
@@ -1119,8 +1131,8 @@ function run() {
         try {
             const cuda = core.getInput('cuda');
             core.debug(`Desired cuda version: ${cuda}`);
-            // const cudnn: string = core.getInput('cudnn')
-            // core.debug(`Desired cudnn version: ${cudnn}`)
+            const cudnn = core.getInput('cudnn');
+            core.debug(`Desired cudnn version: ${cudnn}`);
             const cudnn_url = core.getInput('cudnn_url');
             core.debug(`Desired cuDNN: ${cudnn_url}`);
             const subPackages = core.getInput('sub-packages');
@@ -1146,7 +1158,7 @@ function run() {
             const methodParsed = (0, method_1.parseMethod)(methodString);
             core.debug(`Parsed method: ${methodParsed}`);
             // Parse version string
-            const cuda_toolkit = yield (0, version_1.getVersion)(cuda, cudnn_url, methodParsed);
+            const cuda_toolkit = yield (0, version_1.getVersion)(cuda, cudnn, cudnn_url, methodParsed);
             // Parse linuxLocalArgs array
             let linuxLocalArgsArray = [];
             try {
@@ -1480,9 +1492,7 @@ const platform_1 = __nccwpck_require__(9238);
 const semver_1 = __nccwpck_require__(1383);
 const get_links_1 = __nccwpck_require__(1451);
 // Helper for converting string to SemVer and verifying it exists in the links
-function getVersion(cudaVersionString, 
-// cudnnVersionString: string,
-cudnnDownloadURL, method) {
+function getVersion(cudaVersionString, cudnnVersionString, cudnnDownloadURL, method) {
     return __awaiter(this, void 0, void 0, function* () {
         const version = new semver_1.SemVer(cudaVersionString);
         // const cudnn_version = new SemVer(cudnnVersionString)
@@ -1514,9 +1524,13 @@ cudnnDownloadURL, method) {
             core.debug(`CUDA Version available: ${version}`);
             const toolkit = {
                 cuda_version: version,
-                cudnn_version: cudnnDownloadURL.length > 0 ? new semver_1.SemVer('0.0.0') : undefined,
+                cudnn_version: cudnnDownloadURL.length > 0 && cudnnVersionString.length > 0
+                    ? new semver_1.SemVer(cudnnVersionString)
+                    : undefined,
                 cuda_url: undefined,
-                cudnn_url: cudnnDownloadURL.length > 0 ? new URL(cudnnDownloadURL) : undefined
+                cudnn_url: cudnnDownloadURL.length > 0 && cudnnVersionString.length > 0
+                    ? new URL(cudnnDownloadURL)
+                    : undefined
             };
             return toolkit;
             // if (
