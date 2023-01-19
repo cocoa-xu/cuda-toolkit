@@ -161,13 +161,15 @@ function download(toolkit, method, useGitHubCache) {
     return __awaiter(this, void 0, void 0, function* () {
         // First try to find tool with desired version in tool cache (local to machine)
         const toolName = 'cuda_installer';
+        const cudnnToolName = 'cudnn_archive';
         const osType = yield (0, platform_1.getOs)();
         const osRelease = yield (0, platform_1.getRelease)();
         const toolId = `${toolName}-${osType}-${osRelease}`;
-        const toolPath = tc.find(toolId, `${toolkit.cuda_version}`);
+        const cudnnToolId = `${cudnnToolName}-${osType}-${osRelease}`;
         // Path that contains the executable file
         let executablePath;
         let cudnnArchivePath;
+        const toolPath = tc.find(toolId, `${toolkit.cuda_version}`);
         if (toolPath) {
             // Tool is already in cache
             core.debug(`Found CUDA in local machine cache ${toolPath}`);
@@ -179,14 +181,14 @@ function download(toolkit, method, useGitHubCache) {
             executablePath = yield fromCacheOrDownload(toolkit, method, cacheKey, useGitHubCache, osType, toolId, platform_1.DownloadType.cuda);
         }
         if (toolkit.cudnn_version !== undefined) {
-            const cudnnPath = tc.find(toolId, `${toolkit.cudnn_version}`);
+            const cudnnPath = tc.find(cudnnToolId, `${toolkit.cudnn_version}`);
             if (cudnnPath) {
                 // Tool is already in cache
                 core.debug(`Found cudnn in local machine cache ${cudnnPath}`);
                 cudnnArchivePath = cudnnPath;
             }
             else {
-                const cudnnCacheKey = `${toolId}-${toolkit.cudnn_version}`;
+                const cudnnCacheKey = `${cudnnToolId}-${toolkit.cudnn_version}`;
                 cudnnArchivePath = yield fromCacheOrDownload(toolkit, method, cudnnCacheKey, useGitHubCache, osType, toolId, platform_1.DownloadType.cudnn);
             }
         }
@@ -463,11 +465,6 @@ function installCudnn(cudnnArchivePath, cudaPath) {
                 fileExt = (0, downloader_1.getFileExtension)(platform_1.OSType.linux, platform_1.DownloadType.cudnn);
                 break;
             case platform_1.OSType.windows:
-                // C:\Program Files\...
-                // Program Files\...
-                // `C:\'${cudaPath}'` => C:\'Program Files\...'
-                cudaPath = cudaPath.substring(3);
-                cudaPath = `C:\\'${cudaPath}'`;
                 command = 'powershell';
                 installArgs = [
                     '-command',

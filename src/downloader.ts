@@ -18,14 +18,16 @@ export async function download(
 ): Promise<[string, string | undefined]> {
   // First try to find tool with desired version in tool cache (local to machine)
   const toolName = 'cuda_installer'
+  const cudnnToolName = 'cudnn_archive'
   const osType = await getOs()
   const osRelease = await getRelease()
   const toolId = `${toolName}-${osType}-${osRelease}`
-  const toolPath = tc.find(toolId, `${toolkit.cuda_version}`)
+  const cudnnToolId = `${cudnnToolName}-${osType}-${osRelease}`
 
   // Path that contains the executable file
   let executablePath: string
   let cudnnArchivePath: string | undefined
+  const toolPath = tc.find(toolId, `${toolkit.cuda_version}`)
   if (toolPath) {
     // Tool is already in cache
     core.debug(`Found CUDA in local machine cache ${toolPath}`)
@@ -45,13 +47,13 @@ export async function download(
   }
 
   if (toolkit.cudnn_version !== undefined) {
-    const cudnnPath = tc.find(toolId, `${toolkit.cudnn_version}`)
+    const cudnnPath = tc.find(cudnnToolId, `${toolkit.cudnn_version}`)
     if (cudnnPath) {
       // Tool is already in cache
       core.debug(`Found cudnn in local machine cache ${cudnnPath}`)
       cudnnArchivePath = cudnnPath
     } else {
-      const cudnnCacheKey = `${toolId}-${toolkit.cudnn_version}`
+      const cudnnCacheKey = `${cudnnToolId}-${toolkit.cudnn_version}`
       cudnnArchivePath = await fromCacheOrDownload(
         toolkit,
         method,

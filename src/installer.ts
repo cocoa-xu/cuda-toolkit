@@ -114,11 +114,6 @@ export async function installCudnn(
       fileExt = getFileExtension(OSType.linux, DownloadType.cudnn)
       break
     case OSType.windows:
-      // C:\Program Files\...
-      // Program Files\...
-      // `C:\'${cudaPath}'` => C:\'Program Files\...'
-      cudaPath = cudaPath.substring(3)
-      cudaPath = `C:\\'${cudaPath}'`
       command = 'powershell'
       installArgs = [
         '-command',
