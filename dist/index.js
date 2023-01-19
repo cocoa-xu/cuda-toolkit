@@ -1199,7 +1199,8 @@ function run() {
             core.setOutput('cuda', cuda);
             core.setOutput('CUDA_PATH', cudaPath);
             if (cudnnArchivePath !== undefined) {
-                yield (0, installer_1.installCudnn)(cudnnArchivePath, cudaPath);
+                // await installCudnn(cudnnArchivePath, cudaPath)
+                core.setOutput('CUDNN_PATH', cudnnArchivePath);
             }
         }
         catch (error) {
