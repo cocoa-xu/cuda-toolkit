@@ -7,10 +7,12 @@ test.concurrent.each<Method>(['local', 'network'])(
   async method => {
     const versionString = '11.2.2'
     const cudnnVersionString = '8.7.0'
+    const cudnnURL = 'https://example.com'
     try {
       const toolkit = await getVersion(
         versionString,
         cudnnVersionString,
+        cudnnURL,
         method
       )
       expect(toolkit.cuda_version).toBeInstanceOf(SemVer)
@@ -32,8 +34,9 @@ test.concurrent.each<Method>(['local', 'network'])(
   async method => {
     const versionString =
       'invalid version string that does not conform to semver'
+    const cudnnURL = 'invalid URL'
     await expect(
-      getVersion(versionString, versionString, method)
+      getVersion(versionString, versionString, cudnnURL, method)
     ).rejects.toThrow(TypeError(`Invalid Version: ${versionString}`))
   }
 )
@@ -43,9 +46,10 @@ test.concurrent.each<Method>(['local', 'network'])(
   async method => {
     const versionString = '0.0.1'
     const cudnnVersionString = '8.7.0'
+    const cudnnURL = 'invalid URL'
     try {
       await expect(
-        getVersion(versionString, cudnnVersionString, method)
+        getVersion(versionString, cudnnVersionString, cudnnURL, method)
       ).rejects.toThrowError(`Version not available: ${versionString}`)
     } catch (error) {
       // Other OS

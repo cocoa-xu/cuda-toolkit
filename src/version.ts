@@ -9,7 +9,7 @@ import {getLinks} from './links/get-links'
 // Helper for converting string to SemVer and verifying it exists in the links
 export async function getVersion(
   cudaVersionString: string,
-  // cudnnVersionString: string,
+  cudnnVersionString: string,
   cudnnDownloadURL: string,
   method: Method
 ): Promise<CUDAToolkit> {
@@ -48,10 +48,14 @@ export async function getVersion(
     const toolkit: CUDAToolkit = {
       cuda_version: version,
       cudnn_version:
-        cudnnDownloadURL.length > 0 ? new SemVer('0.0.0') : undefined,
+        cudnnDownloadURL.length > 0 && cudnnVersionString.length > 0
+          ? new SemVer(cudnnVersionString)
+          : undefined,
       cuda_url: undefined,
       cudnn_url:
-        cudnnDownloadURL.length > 0 ? new URL(cudnnDownloadURL) : undefined
+        cudnnDownloadURL.length > 0 && cudnnVersionString.length > 0
+          ? new URL(cudnnDownloadURL)
+          : undefined
     }
     return toolkit
 

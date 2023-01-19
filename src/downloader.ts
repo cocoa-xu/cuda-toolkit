@@ -60,7 +60,7 @@ export async function download(
         cudnnCacheKey,
         useGitHubCache,
         osType,
-        toolId,
+        cudnnToolId,
         DownloadType.cudnn
       )
     }

@@ -4,7 +4,7 @@ import {OSType, getOs, CUDAToolkit, DownloadType} from './platform'
 import {exec} from '@actions/exec'
 import {getFileExtension} from './downloader'
 import * as fs from 'fs'
-const path = require('path')
+import * as path from 'path'
 
 export async function install(
   executablePath: string,
@@ -87,7 +87,11 @@ export async function install(
       )
       core.debug(`Upload result: ${uploadResult}`)
     }
-    fs.rm(executablePath, () => {})
+    fs.rm(executablePath, err => {
+      if (err !== undefined) {
+        throw err
+      }
+    })
   }
 }
 
@@ -123,7 +127,8 @@ export async function installCudnn(
         '-LiteralPath',
         `"${cudnnArchivePath}"`,
         '-DestinationPath',
-        `"${cudaPath}"`
+        `"${cudaPath}"`,
+        '-force'
       ]
       fileExt = getFileExtension(OSType.windows, DownloadType.cudnn)
       break
@@ -138,7 +143,11 @@ export async function installCudnn(
     core.debug(`Error during installation: ${error}`)
     throw error
   }
-  fs.rm(cudnnArchivePath, () => {})
+  fs.rm(cudnnArchivePath, err => {
+    if (err !== undefined) {
+      throw err
+    }
+  })
 
   let filename: string = path.basename(cudnnArchivePath)
   filename = filename.substring(0, filename.lastIndexOf(fileExt))
@@ -162,7 +171,8 @@ export async function installCudnn(
         '|',
         'Move-Item',
         '-Destination',
-        `"${cudaPath}\\bin"`
+        `"${cudaPath}\\bin"`,
+        '-force'
       ]
       break
   }
@@ -187,7 +197,8 @@ export async function installCudnn(
         '|',
         'Move-Item',
         '-Destination',
-        `"${cudaPath}\\include"`
+        `"${cudaPath}\\include"`,
+        '-force'
       ]
       try {
         core.debug(`moving cudnn files: ${cudnnArchivePath}`)
@@ -207,7 +218,8 @@ export async function installCudnn(
         '|',
         'Move-Item',
         '-Destination',
-        `"${cudaPath}\\lib\\x64"`
+        `"${cudaPath}\\lib\\x64"`,
+        '-force'
       ]
       try {
         core.debug(`moving cudnn files: ${cudnnArchivePath}`)
