@@ -441,8 +441,8 @@ function install(executablePath, toolkit, subPackagesArray, linuxLocalArgsArray)
                 core.debug(`Upload result: ${uploadResult}`);
             }
             fs.rm(executablePath, err => {
-                if (err !== undefined) {
-                    throw err;
+                if (err) {
+                    core.debug(`error when deleting CUDA installer: ${err}`);
                 }
             });
         }
@@ -495,8 +495,8 @@ function installCudnn(cudnnArchivePath, cudaPath) {
             throw error;
         }
         fs.rm(cudnnArchivePath, err => {
-            if (err !== undefined) {
-                throw err;
+            if (err) {
+                core.debug(`error when deleting cudnn archive: ${err}`);
             }
         });
         let filename = path.basename(cudnnArchivePath);

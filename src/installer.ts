@@ -88,8 +88,8 @@ export async function install(
       core.debug(`Upload result: ${uploadResult}`)
     }
     fs.rm(executablePath, err => {
-      if (err !== undefined) {
-        throw err
+      if (err) {
+        core.debug(`error when deleting CUDA installer: ${err}`)
       }
     })
   }
@@ -144,8 +144,8 @@ export async function installCudnn(
     throw error
   }
   fs.rm(cudnnArchivePath, err => {
-    if (err !== undefined) {
-      throw err
+    if (err) {
+      core.debug(`error when deleting cudnn archive: ${err}`)
     }
   })
 
