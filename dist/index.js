@@ -1119,8 +1119,10 @@ function run() {
         try {
             const cuda = core.getInput('cuda');
             core.debug(`Desired cuda version: ${cuda}`);
-            const cudnn = core.getInput('cudnn');
-            core.debug(`Desired cudnn version: ${cudnn}`);
+            // const cudnn: string = core.getInput('cudnn')
+            // core.debug(`Desired cudnn version: ${cudnn}`)
+            const cudnn_url = core.getInput('cudnn_url');
+            core.debug(`Desired cuDNN: ${cudnn_url}`);
             const subPackages = core.getInput('sub-packages');
             core.debug(`Desired subPackes: ${subPackages}`);
             const methodString = core.getInput('method');
@@ -1144,7 +1146,7 @@ function run() {
             const methodParsed = (0, method_1.parseMethod)(methodString);
             core.debug(`Parsed method: ${methodParsed}`);
             // Parse version string
-            const cuda_toolkit = yield (0, version_1.getVersion)(cuda, cudnn, methodParsed);
+            const cuda_toolkit = yield (0, version_1.getVersion)(cuda, cudnn_url, methodParsed);
             // Parse linuxLocalArgs array
             let linuxLocalArgsArray = [];
             try {
@@ -1478,10 +1480,12 @@ const platform_1 = __nccwpck_require__(9238);
 const semver_1 = __nccwpck_require__(1383);
 const get_links_1 = __nccwpck_require__(1451);
 // Helper for converting string to SemVer and verifying it exists in the links
-function getVersion(cudaVersionString, cudnnVersionString, method) {
+function getVersion(cudaVersionString, 
+// cudnnVersionString: string,
+cudnnDownloadURL, method) {
     return __awaiter(this, void 0, void 0, function* () {
         const version = new semver_1.SemVer(cudaVersionString);
-        const cudnn_version = new semver_1.SemVer(cudnnVersionString);
+        // const cudnn_version = new SemVer(cudnnVersionString)
         const links = yield (0, get_links_1.getLinks)();
         let versions;
         let cudnn_versions;
@@ -1508,20 +1512,28 @@ function getVersion(cudaVersionString, cudnnVersionString, method) {
         core.debug(`Available cudnn versions: ${cudnn_versions}`);
         if (versions.find(v => v.compare(version) === 0) !== undefined) {
             core.debug(`CUDA Version available: ${version}`);
-            if (cudnn_versions.find(vv => vv.compare(cudnn_version) === 0) !== undefined) {
-                core.debug(`cudnn version available: ${cudnn_version}`);
-                const toolkit = {
-                    cuda_version: version,
-                    cudnn_version,
-                    cuda_url: undefined,
-                    cudnn_url: undefined
-                };
-                return toolkit;
-            }
-            else {
-                core.debug(`Version not available error!`);
-                throw new Error(`Cudnn version not available: ${version}`);
-            }
+            const toolkit = {
+                cuda_version: version,
+                cudnn_version: cudnnDownloadURL.length > 0 ? new semver_1.SemVer('0.0.0') : undefined,
+                cuda_url: undefined,
+                cudnn_url: cudnnDownloadURL.length > 0 ? new URL(cudnnDownloadURL) : undefined
+            };
+            return toolkit;
+            // if (
+            //   cudnn_versions.find(vv => vv.compare(cudnn_version) === 0) !== undefined
+            // ) {
+            //   core.debug(`cudnn version available: ${cudnn_version}`)
+            //   const toolkit: CUDAToolkit = {
+            //     cuda_version: version,
+            //     cudnn_version: cudnn_version,
+            //     cuda_url: new URL(''),
+            //     cudnn_url: new URL('')
+            //   }
+            //   return toolkit
+            // } else {
+            //   core.debug(`Version not available error!`)
+            //   throw new Error(`Cudnn version not available: ${version}`)
+            // }
         }
         else {
             core.debug(`Version not available error!`);

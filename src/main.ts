@@ -11,8 +11,10 @@ async function run(): Promise<void> {
   try {
     const cuda: string = core.getInput('cuda')
     core.debug(`Desired cuda version: ${cuda}`)
-    const cudnn: string = core.getInput('cudnn')
-    core.debug(`Desired cudnn version: ${cudnn}`)
+    // const cudnn: string = core.getInput('cudnn')
+    // core.debug(`Desired cudnn version: ${cudnn}`)
+    const cudnn_url: string = core.getInput('cudnn_url')
+    core.debug(`Desired cuDNN: ${cudnn_url}`)
     const subPackages: string = core.getInput('sub-packages')
     core.debug(`Desired subPackes: ${subPackages}`)
     const methodString: string = core.getInput('method')
@@ -38,7 +40,7 @@ async function run(): Promise<void> {
     core.debug(`Parsed method: ${methodParsed}`)
 
     // Parse version string
-    const cuda_toolkit = await getVersion(cuda, cudnn, methodParsed)
+    const cuda_toolkit = await getVersion(cuda, cudnn_url, methodParsed)
 
     // Parse linuxLocalArgs array
     let linuxLocalArgsArray: string[] = []
