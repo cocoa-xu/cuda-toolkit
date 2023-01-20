@@ -265,17 +265,18 @@ function fromCacheOrDownload(toolName, toolkit, method, cacheKey, useGitHubCache
             core.debug(`Not found in local/GitHub cache, downloading...`);
             // Get download URL
             toolkit = yield getDownloadURL(method, toolkit);
-            if (toolkit.cuda_url === undefined) {
-                throw new Error('Cannot find CUDA URL');
-            }
             // Get CUDA/cudnn installer filename extension depending on OS
             const fileExtension = getFileExtension(osType, downloadType);
             const version_string = downloadType === platform_1.DownloadType.cuda
                 ? toolkit.cuda_version
                 : toolkit.cudnn_version;
+            const downloadURL = downloadType === platform_1.DownloadType.cuda ? toolkit.cuda_url : toolkit.cudnn_url;
+            if (downloadURL === undefined) {
+                throw new Error(`Empty URL`);
+            }
             const destFileName = `${toolId}_${version_string}.${fileExtension}`;
             // Download executable
-            const downloadPath = yield tc.downloadTool(toolkit.cuda_url.toString(), destFileName);
+            const downloadPath = yield tc.downloadTool(downloadURL.toString(), destFileName);
             // Copy file to GitHub cachePath
             core.info(`Copying ${destFileName} to ${cachePath}`);
             yield io.mkdirP(cachePath);
@@ -303,9 +304,11 @@ function getDownloadURL(method, toolkit) {
         switch (method) {
             case 'local':
                 toolkit.cuda_url = links.getLocalURLFromCudaVersion(toolkit.cuda_version);
-                if (toolkit.cudnn_version !== undefined) {
-                    toolkit.cudnn_url = links.getLocalURLFromCudnnVersion(toolkit.cudnn_version);
-                }
+                // if (toolkit.cudnn_version !== undefined) {
+                //   toolkit.cudnn_url = links.getLocalURLFromCudnnVersion(
+                //     toolkit.cudnn_version
+                //   )
+                // }
                 return toolkit;
             case 'network':
                 if (!(links instanceof windows_links_1.WindowsLinks)) {
@@ -313,9 +316,11 @@ function getDownloadURL(method, toolkit) {
                     throw new Error(`Network mode is not supported by linux, shouldn't even get here`);
                 }
                 toolkit.cuda_url = links.getNetworkURLFromCudaVersion(toolkit.cuda_version);
-                if (toolkit.cudnn_version !== undefined) {
-                    toolkit.cudnn_url = links.getLocalURLFromCudnnVersion(toolkit.cudnn_version);
-                }
+                // if (toolkit.cudnn_version !== undefined) {
+                //   toolkit.cudnn_url = links.getLocalURLFromCudnnVersion(
+                //     toolkit.cudnn_version
+                //   )
+                // }
                 return toolkit;
             default:
                 throw new Error(`Invalid method: expected either 'local' or 'network', got '${method}'`);

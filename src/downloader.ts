@@ -152,9 +152,6 @@ async function fromCacheOrDownload(
     core.debug(`Not found in local/GitHub cache, downloading...`)
     // Get download URL
     toolkit = await getDownloadURL(method, toolkit)
-    if (toolkit.cuda_url === undefined) {
-      throw new Error('Cannot find CUDA URL')
-    }
 
     // Get CUDA/cudnn installer filename extension depending on OS
     const fileExtension: string = getFileExtension(osType, downloadType)
@@ -162,10 +159,16 @@ async function fromCacheOrDownload(
       downloadType === DownloadType.cuda
         ? toolkit.cuda_version
         : toolkit.cudnn_version
+    const downloadURL =
+      downloadType === DownloadType.cuda ? toolkit.cuda_url : toolkit.cudnn_url
+    if (downloadURL === undefined) {
+      throw new Error(`Empty URL`)
+    }
+
     const destFileName = `${toolId}_${version_string}.${fileExtension}`
     // Download executable
     const downloadPath: string = await tc.downloadTool(
-      toolkit.cuda_url.toString(),
+      downloadURL.toString(),
       destFileName
     )
     // Copy file to GitHub cachePath
@@ -204,11 +207,11 @@ async function getDownloadURL(
   switch (method) {
     case 'local':
       toolkit.cuda_url = links.getLocalURLFromCudaVersion(toolkit.cuda_version)
-      if (toolkit.cudnn_version !== undefined) {
-        toolkit.cudnn_url = links.getLocalURLFromCudnnVersion(
-          toolkit.cudnn_version
-        )
-      }
+      // if (toolkit.cudnn_version !== undefined) {
+      //   toolkit.cudnn_url = links.getLocalURLFromCudnnVersion(
+      //     toolkit.cudnn_version
+      //   )
+      // }
       return toolkit
     case 'network':
       if (!(links instanceof WindowsLinks)) {
@@ -220,11 +223,11 @@ async function getDownloadURL(
       toolkit.cuda_url = links.getNetworkURLFromCudaVersion(
         toolkit.cuda_version
       )
-      if (toolkit.cudnn_version !== undefined) {
-        toolkit.cudnn_url = links.getLocalURLFromCudnnVersion(
-          toolkit.cudnn_version
-        )
-      }
+      // if (toolkit.cudnn_version !== undefined) {
+      //   toolkit.cudnn_url = links.getLocalURLFromCudnnVersion(
+      //     toolkit.cudnn_version
+      //   )
+      // }
       return toolkit
     default:
       throw new Error(
