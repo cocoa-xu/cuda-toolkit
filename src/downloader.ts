@@ -169,7 +169,7 @@ async function fromCacheOrDownload(
       destFileName
     )
     // Copy file to GitHub cachePath
-    core.debug(`Copying ${destFileName} to ${cachePath}`)
+    core.info(`Copying ${destFileName} to ${cachePath}`)
     await io.mkdirP(cachePath)
     await io.cp(destFileName, cachePath)
     // Cache download to local machine cache
@@ -179,7 +179,7 @@ async function fromCacheOrDownload(
       `${toolName}-${osType}`,
       `${version_string}`
     )
-    core.debug(`Cached download to local machine cache at ${localCachePath}`)
+    core.info(`Cached download to local machine cache at ${localCachePath}`)
     // Cache download to GitHub cache if enabled
     if (useGitHubCache) {
       const cacheId = await cache.saveCache([cachePath], cacheKey)

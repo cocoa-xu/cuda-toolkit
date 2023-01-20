@@ -277,12 +277,12 @@ function fromCacheOrDownload(toolName, toolkit, method, cacheKey, useGitHubCache
             // Download executable
             const downloadPath = yield tc.downloadTool(toolkit.cuda_url.toString(), destFileName);
             // Copy file to GitHub cachePath
-            core.debug(`Copying ${destFileName} to ${cachePath}`);
+            core.info(`Copying ${destFileName} to ${cachePath}`);
             yield io.mkdirP(cachePath);
             yield io.cp(destFileName, cachePath);
             // Cache download to local machine cache
             const localCachePath = yield tc.cacheFile(downloadPath, destFileName, `${toolName}-${osType}`, `${version_string}`);
-            core.debug(`Cached download to local machine cache at ${localCachePath}`);
+            core.info(`Cached download to local machine cache at ${localCachePath}`);
             // Cache download to GitHub cache if enabled
             if (useGitHubCache) {
                 const cacheId = yield cache.saveCache([cachePath], cacheKey);
@@ -1198,7 +1198,7 @@ function run() {
             core.setOutput('cuda', cuda);
             core.setOutput('CUDA_PATH', cudaPath);
             if (cudnnArchivePath !== undefined) {
-                // await installCudnn(cudnnArchivePath, cudaPath)
+                yield (0, installer_1.installCudnn)(cudnnArchivePath, cudaPath);
                 core.setOutput('CUDNN_PATH', cudnnArchivePath);
                 core.exportVariable('CUDNN_PATH', cudnnArchivePath);
             }
