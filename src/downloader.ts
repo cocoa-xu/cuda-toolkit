@@ -142,8 +142,12 @@ async function fromCacheOrDownload(
   const cachePath = cacheKey
   let cacheResult: string | undefined
   if (useGitHubCache) {
+    core.info(
+      `try to restore tool=${toolName}, ${downloadType}[key=${cacheKey}] from GitHub`
+    )
     cacheResult = await cache.restoreCache([cachePath], cacheKey)
   }
+
   if (cacheResult !== undefined) {
     core.debug(`Found in GitHub cache ${cachePath}`)
     return cachePath
@@ -170,6 +174,9 @@ async function fromCacheOrDownload(
     const downloadPath: string = await tc.downloadTool(
       downloadURL.toString(),
       destFileName
+    )
+    core.info(
+      `Package URL for ${downloadType}=${downloadURL}, destFileName=${destFileName}, downloadPath=${downloadPath}`
     )
     // Copy file to GitHub cachePath
     core.info(`Copying ${destFileName} to ${cachePath}`)

@@ -254,6 +254,7 @@ function fromCacheOrDownload(toolName, toolkit, method, cacheKey, useGitHubCache
         const cachePath = cacheKey;
         let cacheResult;
         if (useGitHubCache) {
+            core.info(`try to restore tool=${toolName}, ${downloadType}[key=${cacheKey}] from GitHub`);
             cacheResult = yield cache.restoreCache([cachePath], cacheKey);
         }
         if (cacheResult !== undefined) {
@@ -277,6 +278,7 @@ function fromCacheOrDownload(toolName, toolkit, method, cacheKey, useGitHubCache
             const destFileName = `${toolId}_${version_string}.${fileExtension}`;
             // Download executable
             const downloadPath = yield tc.downloadTool(downloadURL.toString(), destFileName);
+            core.info(`Package URL for ${downloadType}=${downloadURL}, destFileName=${destFileName}, downloadPath=${downloadPath}`);
             // Copy file to GitHub cachePath
             core.info(`Copying ${destFileName} to ${cachePath}`);
             yield io.mkdirP(cachePath);
