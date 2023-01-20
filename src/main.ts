@@ -6,6 +6,7 @@ import {download} from './downloader'
 import {getVersion} from './version'
 import {install, installCudnn} from './installer'
 import {updatePath} from './update-path'
+import path from 'path'
 
 async function run(): Promise<void> {
   try {
@@ -15,6 +16,8 @@ async function run(): Promise<void> {
     core.debug(`Desired cudnn version: ${cudnn}`)
     const cudnn_url: string = core.getInput('cudnn_url')
     core.debug(`Desired cuDNN: ${cudnn_url}`)
+    const cudnn_archive_dir: string = core.getInput('cudnn_archive_dir')
+    core.debug(`Desired cuDNN archive dir: ${cudnn_archive_dir}`)
     const subPackages: string = core.getInput('sub-packages')
     core.debug(`Desired subPackes: ${subPackages}`)
     const methodString: string = core.getInput('method')
@@ -99,8 +102,17 @@ async function run(): Promise<void> {
     core.setOutput('cuda', cuda)
     core.setOutput('CUDA_PATH', cudaPath)
 
-    if (cudnnArchivePath !== undefined) {
-      await installCudnn(cudnnArchivePath, cudaPath)
+    if (
+      cudnnArchivePath !== undefined &&
+      cuda_toolkit.cudnn_url?.pathname !== undefined
+    ) {
+      let directoryName: string
+      if (cudnn_archive_dir.length > 0) {
+        directoryName = cudnn_archive_dir
+      } else {
+        directoryName = path.basename(cuda_toolkit.cudnn_url?.pathname)
+      }
+      await installCudnn(cudnnArchivePath, directoryName, cudaPath)
     }
   } catch (error) {
     if (error instanceof Error) {

@@ -14,6 +14,10 @@ inputs:
     description: 'cuDNN Archive URL'
     required: false
     default: ''
+  cudnn_archive_dir:
+    description: 'name of the unarchived cuDNN directory'
+    required: false
+    default: ''
   sub-packages:
     description: 'Only installs specified subpackages, must be in the form of a JSON array. For example, if you only want to install nvcc and visual studio integration: ["nvcc", "visual_studio_integration"] double quotes required! Note that if you want to use this on Linux, ''network'' method MUST be used.'
     required: false

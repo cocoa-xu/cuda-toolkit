@@ -450,7 +450,7 @@ function install(executablePath, toolkit, subPackagesArray, linuxLocalArgsArray)
     });
 }
 exports.install = install;
-function installCudnn(cudnnArchivePath, cudaPath) {
+function installCudnn(cudnnArchivePath, directoryName, cudaPath) {
     return __awaiter(this, void 0, void 0, function* () {
         let installArgs;
         let command;
@@ -496,86 +496,89 @@ function installCudnn(cudnnArchivePath, cudaPath) {
             throw error;
         }
         yield io.rmRF(cudnnArchivePath);
-        // let filename: string = path.basename(cudnnArchivePath)
-        // filename = filename.substring(0, filename.lastIndexOf(fileExt) - 1)
-        // // move everything unarchived
-        // switch (await getOs()) {
-        //   case OSType.linux:
-        //     command = `sudo bash`
-        //     installArgs = [
-        //       '-c',
-        //       `mv "${cudaPath}/${filename}/lib/*" "${cudaPath}/lib/" && mv "${cudaPath}/${filename}/include/*" "${cudaPath}/include/"`
-        //     ]
-        //     break
-        //   case OSType.windows:
-        //     command = 'powershell'
-        //     installArgs = [
-        //       '-command',
-        //       'Get-ChildItem',
-        //       '-Path',
-        //       `"${cudaPath}\\${filename}\\bin\\\\*.dll"`,
-        //       '-Recurse',
-        //       '|',
-        //       'Move-Item',
-        //       '-Destination',
-        //       `"${cudaPath}\\bin"`,
-        //       '-force'
-        //     ]
-        //     break
-        // }
-        // try {
-        //   core.debug(`moving cudnn files: ${cudnnArchivePath}`)
-        //   const exitCode = await exec(command, installArgs, execOptions)
-        //   core.debug(`exit code: ${exitCode}`)
-        // } catch (error) {
-        //   core.debug(`Error during installation: ${error}`)
-        //   throw error
-        // }
-        // switch (await getOs()) {
-        //   case OSType.windows:
-        //     command = 'powershell'
-        //     installArgs = [
-        //       '-command',
-        //       'Get-ChildItem',
-        //       '-Path',
-        //       `"${cudaPath}\\${filename}\\include\\\\*.h"`,
-        //       '-Recurse',
-        //       '|',
-        //       'Move-Item',
-        //       '-Destination',
-        //       `"${cudaPath}\\include"`,
-        //       '-force'
-        //     ]
-        //     try {
-        //       core.debug(`moving cudnn files: ${cudnnArchivePath}`)
-        //       const exitCode = await exec(command, installArgs, execOptions)
-        //       core.debug(`exit code: ${exitCode}`)
-        //     } catch (error) {
-        //       core.debug(`Error during installation: ${error}`)
-        //       throw error
-        //     }
-        //     installArgs = [
-        //       '-command',
-        //       'Get-ChildItem',
-        //       '-Path',
-        //       `"${cudaPath}\\${filename}\\lib\\x64\\\\*.lib"`,
-        //       '-Recurse',
-        //       '|',
-        //       'Move-Item',
-        //       '-Destination',
-        //       `"${cudaPath}\\lib\\x64"`,
-        //       '-force'
-        //     ]
-        //     try {
-        //       core.debug(`moving cudnn files: ${cudnnArchivePath}`)
-        //       const exitCode = await exec(command, installArgs, execOptions)
-        //       core.debug(`exit code: ${exitCode}`)
-        //     } catch (error) {
-        //       core.debug(`Error during installation: ${error}`)
-        //       throw error
-        //     }
-        //     break
-        // }
+        let filename = directoryName;
+        filename = filename.substring(0, filename.lastIndexOf(fileExt) - 1);
+        // move everything unarchived
+        switch (yield (0, platform_1.getOs)()) {
+            case platform_1.OSType.linux:
+                command = `sudo bash`;
+                installArgs = [
+                    '-c',
+                    `mv "${cudaPath}/${filename}/lib/*" "${cudaPath}/lib/" && mv "${cudaPath}/${filename}/include/*" "${cudaPath}/include/"`
+                ];
+                break;
+            case platform_1.OSType.windows:
+                command = 'powershell';
+                installArgs = [
+                    '-command',
+                    'Get-ChildItem',
+                    '-Path',
+                    `"${cudaPath}\\${filename}\\bin\\\\*.dll"`,
+                    '-Recurse',
+                    '|',
+                    'Move-Item',
+                    '-Destination',
+                    `"${cudaPath}\\bin"`,
+                    '-force'
+                ];
+                break;
+        }
+        try {
+            core.debug(`moving cudnn files: ${cudnnArchivePath}`);
+            const exitCode = yield (0, exec_1.exec)(command, installArgs, execOptions);
+            core.debug(`exit code: ${exitCode}`);
+        }
+        catch (error) {
+            core.debug(`Error during installation: ${error}`);
+            throw error;
+        }
+        switch (yield (0, platform_1.getOs)()) {
+            case platform_1.OSType.windows:
+                command = 'powershell';
+                installArgs = [
+                    '-command',
+                    'Get-ChildItem',
+                    '-Path',
+                    `"${cudaPath}\\${filename}\\include\\\\*.h"`,
+                    '-Recurse',
+                    '|',
+                    'Move-Item',
+                    '-Destination',
+                    `"${cudaPath}\\include"`,
+                    '-force'
+                ];
+                try {
+                    core.debug(`moving cudnn files: ${cudnnArchivePath}`);
+                    const exitCode = yield (0, exec_1.exec)(command, installArgs, execOptions);
+                    core.debug(`exit code: ${exitCode}`);
+                }
+                catch (error) {
+                    core.debug(`Error during installation: ${error}`);
+                    throw error;
+                }
+                installArgs = [
+                    '-command',
+                    'Get-ChildItem',
+                    '-Path',
+                    `"${cudaPath}\\${filename}\\lib\\x64\\\\*.lib"`,
+                    '-Recurse',
+                    '|',
+                    'Move-Item',
+                    '-Destination',
+                    `"${cudaPath}\\lib\\x64"`,
+                    '-force'
+                ];
+                try {
+                    core.debug(`moving cudnn files: ${cudnnArchivePath}`);
+                    const exitCode = yield (0, exec_1.exec)(command, installArgs, execOptions);
+                    core.debug(`exit code: ${exitCode}`);
+                }
+                catch (error) {
+                    core.debug(`Error during installation: ${error}`);
+                    throw error;
+                }
+                break;
+        }
     });
 }
 exports.installCudnn = installCudnn;
@@ -1111,6 +1114,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const method_1 = __nccwpck_require__(3607);
@@ -1120,7 +1126,9 @@ const downloader_1 = __nccwpck_require__(5587);
 const version_1 = __nccwpck_require__(8217);
 const installer_1 = __nccwpck_require__(1480);
 const update_path_1 = __nccwpck_require__(4985);
+const path_1 = __importDefault(__nccwpck_require__(1017));
 function run() {
+    var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const cuda = core.getInput('cuda');
@@ -1129,6 +1137,8 @@ function run() {
             core.debug(`Desired cudnn version: ${cudnn}`);
             const cudnn_url = core.getInput('cudnn_url');
             core.debug(`Desired cuDNN: ${cudnn_url}`);
+            const cudnn_archive_dir = core.getInput('cudnn_archive_dir');
+            core.debug(`Desired cuDNN archive dir: ${cudnn_archive_dir}`);
             const subPackages = core.getInput('sub-packages');
             core.debug(`Desired subPackes: ${subPackages}`);
             const methodString = core.getInput('method');
@@ -1192,8 +1202,16 @@ function run() {
             // Set output variables
             core.setOutput('cuda', cuda);
             core.setOutput('CUDA_PATH', cudaPath);
-            if (cudnnArchivePath !== undefined) {
-                yield (0, installer_1.installCudnn)(cudnnArchivePath, cudaPath);
+            if (cudnnArchivePath !== undefined &&
+                ((_a = cuda_toolkit.cudnn_url) === null || _a === void 0 ? void 0 : _a.pathname) !== undefined) {
+                let directoryName;
+                if (cudnn_archive_dir.length > 0) {
+                    directoryName = cudnn_archive_dir;
+                }
+                else {
+                    directoryName = path_1.default.basename((_b = cuda_toolkit.cudnn_url) === null || _b === void 0 ? void 0 : _b.pathname);
+                }
+                yield (0, installer_1.installCudnn)(cudnnArchivePath, directoryName, cudaPath);
             }
         }
         catch (error) {
