@@ -514,7 +514,7 @@ function installCudnn(cudnnArchivePath, cudaPath) {
                     '-command',
                     'Get-ChildItem',
                     '-Path',
-                    `"${cudaPath}\\${filename}\\bin/\\*.dll"`,
+                    `"${cudaPath}\\${filename}\\bin\\\\*.dll"`,
                     '-Recurse',
                     '|',
                     'Move-Item',

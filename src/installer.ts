@@ -159,7 +159,7 @@ export async function installCudnn(
         '-command',
         'Get-ChildItem',
         '-Path',
-        `"${cudaPath}\\${filename}\\bin/\\*.dll"`,
+        `"${cudaPath}\\${filename}\\bin\\\\*.dll"`,
         '-Recurse',
         '|',
         'Move-Item',
