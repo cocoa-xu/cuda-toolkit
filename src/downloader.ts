@@ -142,7 +142,7 @@ async function fromCacheOrDownload(
   const cachePath = cacheKey
   let cacheResult: string | undefined
   if (useGitHubCache) {
-    core.info(
+    core.debug(
       `try to restore tool=${toolName}, ${downloadType}[key=${cacheKey}] from GitHub`
     )
     cacheResult = await cache.restoreCache([cachePath], cacheKey)
@@ -175,11 +175,11 @@ async function fromCacheOrDownload(
       downloadURL.toString(),
       destFileName
     )
-    core.info(
+    core.debug(
       `Package URL for ${downloadType}=${downloadURL}, destFileName=${destFileName}, downloadPath=${downloadPath}`
     )
     // Copy file to GitHub cachePath
-    core.info(`Copying ${destFileName} to ${cachePath}`)
+    core.debug(`Copying ${destFileName} to ${cachePath}`)
     await io.mkdirP(cachePath)
     await io.cp(destFileName, cachePath)
     // Cache download to local machine cache
@@ -189,7 +189,7 @@ async function fromCacheOrDownload(
       `${toolName}-${osType}`,
       `${version_string}`
     )
-    core.info(`Cached download to local machine cache at ${localCachePath}`)
+    core.debug(`Cached download to local machine cache at ${localCachePath}`)
     // Cache download to GitHub cache if enabled
     if (useGitHubCache) {
       const cacheId = await cache.saveCache([cachePath], cacheKey)

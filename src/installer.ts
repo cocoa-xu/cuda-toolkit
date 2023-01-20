@@ -3,8 +3,8 @@ import * as core from '@actions/core'
 import {OSType, getOs, CUDAToolkit, DownloadType} from './platform'
 import {exec} from '@actions/exec'
 import {getFileExtension} from './downloader'
-import * as fs from 'fs'
 import * as path from 'path'
+import * as io from '@actions/io'
 
 export async function install(
   executablePath: string,
@@ -87,11 +87,7 @@ export async function install(
       )
       core.debug(`Upload result: ${uploadResult}`)
     }
-    fs.rm(executablePath, err => {
-      if (err) {
-        core.debug(`error when deleting CUDA installer: ${err}`)
-      }
-    })
+    await io.rmRF(executablePath)
   }
 }
 
@@ -143,11 +139,8 @@ export async function installCudnn(
     core.debug(`Error during installation: ${error}`)
     throw error
   }
-  fs.rm(cudnnArchivePath, err => {
-    if (err) {
-      core.debug(`error when deleting cudnn archive: ${err}`)
-    }
-  })
+
+  await io.rmRF(cudnnArchivePath)
 
   let filename: string = path.basename(cudnnArchivePath)
   filename = filename.substring(0, filename.lastIndexOf(fileExt) - 1)

@@ -101,8 +101,6 @@ async function run(): Promise<void> {
 
     if (cudnnArchivePath !== undefined) {
       await installCudnn(cudnnArchivePath, cudaPath)
-      core.setOutput('CUDNN_PATH', cudnnArchivePath)
-      core.exportVariable('CUDNN_PATH', cudnnArchivePath)
     }
   } catch (error) {
     if (error instanceof Error) {

@@ -254,7 +254,7 @@ function fromCacheOrDownload(toolName, toolkit, method, cacheKey, useGitHubCache
         const cachePath = cacheKey;
         let cacheResult;
         if (useGitHubCache) {
-            core.info(`try to restore tool=${toolName}, ${downloadType}[key=${cacheKey}] from GitHub`);
+            core.debug(`try to restore tool=${toolName}, ${downloadType}[key=${cacheKey}] from GitHub`);
             cacheResult = yield cache.restoreCache([cachePath], cacheKey);
         }
         if (cacheResult !== undefined) {
@@ -278,14 +278,14 @@ function fromCacheOrDownload(toolName, toolkit, method, cacheKey, useGitHubCache
             const destFileName = `${toolId}_${version_string}.${fileExtension}`;
             // Download executable
             const downloadPath = yield tc.downloadTool(downloadURL.toString(), destFileName);
-            core.info(`Package URL for ${downloadType}=${downloadURL}, destFileName=${destFileName}, downloadPath=${downloadPath}`);
+            core.debug(`Package URL for ${downloadType}=${downloadURL}, destFileName=${destFileName}, downloadPath=${downloadPath}`);
             // Copy file to GitHub cachePath
-            core.info(`Copying ${destFileName} to ${cachePath}`);
+            core.debug(`Copying ${destFileName} to ${cachePath}`);
             yield io.mkdirP(cachePath);
             yield io.cp(destFileName, cachePath);
             // Cache download to local machine cache
             const localCachePath = yield tc.cacheFile(downloadPath, destFileName, `${toolName}-${osType}`, `${version_string}`);
-            core.info(`Cached download to local machine cache at ${localCachePath}`);
+            core.debug(`Cached download to local machine cache at ${localCachePath}`);
             // Cache download to GitHub cache if enabled
             if (useGitHubCache) {
                 const cacheId = yield cache.saveCache([cachePath], cacheKey);
@@ -377,8 +377,8 @@ const core = __importStar(__nccwpck_require__(2186));
 const platform_1 = __nccwpck_require__(9238);
 const exec_1 = __nccwpck_require__(1514);
 const downloader_1 = __nccwpck_require__(5587);
-const fs = __importStar(__nccwpck_require__(7147));
 const path = __importStar(__nccwpck_require__(1017));
+const io = __importStar(__nccwpck_require__(7436));
 function install(executablePath, toolkit, subPackagesArray, linuxLocalArgsArray) {
     return __awaiter(this, void 0, void 0, function* () {
         // Install arguments, see: https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#runfile-advanced
@@ -446,11 +446,7 @@ function install(executablePath, toolkit, subPackagesArray, linuxLocalArgsArray)
                 const uploadResult = yield artifactClient.uploadArtifact(artifactName, files, rootDirectory, artifactOptions);
                 core.debug(`Upload result: ${uploadResult}`);
             }
-            fs.rm(executablePath, err => {
-                if (err) {
-                    core.debug(`error when deleting CUDA installer: ${err}`);
-                }
-            });
+            yield io.rmRF(executablePath);
         }
     });
 }
@@ -500,11 +496,7 @@ function installCudnn(cudnnArchivePath, cudaPath) {
             core.debug(`Error during installation: ${error}`);
             throw error;
         }
-        fs.rm(cudnnArchivePath, err => {
-            if (err) {
-                core.debug(`error when deleting cudnn archive: ${err}`);
-            }
-        });
+        yield io.rmRF(cudnnArchivePath);
         let filename = path.basename(cudnnArchivePath);
         filename = filename.substring(0, filename.lastIndexOf(fileExt) - 1);
         // move everything unarchived
@@ -1206,8 +1198,6 @@ function run() {
             core.setOutput('CUDA_PATH', cudaPath);
             if (cudnnArchivePath !== undefined) {
                 yield (0, installer_1.installCudnn)(cudnnArchivePath, cudaPath);
-                core.setOutput('CUDNN_PATH', cudnnArchivePath);
-                core.exportVariable('CUDNN_PATH', cudnnArchivePath);
             }
         }
         catch (error) {
