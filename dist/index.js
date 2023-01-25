@@ -306,11 +306,6 @@ function getDownloadURL(method, toolkit) {
         switch (method) {
             case 'local':
                 toolkit.cuda_url = links.getLocalURLFromCudaVersion(toolkit.cuda_version);
-                // if (toolkit.cudnn_version !== undefined) {
-                //   toolkit.cudnn_url = links.getLocalURLFromCudnnVersion(
-                //     toolkit.cudnn_version
-                //   )
-                // }
                 return toolkit;
             case 'network':
                 if (!(links instanceof windows_links_1.WindowsLinks)) {
@@ -318,11 +313,6 @@ function getDownloadURL(method, toolkit) {
                     throw new Error(`Network mode is not supported by linux, shouldn't even get here`);
                 }
                 toolkit.cuda_url = links.getNetworkURLFromCudaVersion(toolkit.cuda_version);
-                // if (toolkit.cudnn_version !== undefined) {
-                //   toolkit.cudnn_url = links.getLocalURLFromCudnnVersion(
-                //     toolkit.cudnn_version
-                //   )
-                // }
                 return toolkit;
             default:
                 throw new Error(`Invalid method: expected either 'local' or 'network', got '${method}'`);
@@ -634,13 +624,9 @@ const semver_1 = __nccwpck_require__(1383);
 class AbstractLinks {
     constructor() {
         this.cudaVersionToURL = new Map();
-        this.cudnnVersionData = new Map();
     }
     getAvailableLocalCudaVersions() {
         return Array.from(this.cudaVersionToURL.keys()).map(s => new semver_1.SemVer(s));
-    }
-    getAvailableLocalCudnnVersions(cuda_version) {
-        return Array.from(this.compatibleCudnnVersions(cuda_version).keys()).map(s => new semver_1.SemVer(s));
     }
     getLocalURLFromCudaVersion(version) {
         const urlString = this.cudaVersionToURL.get(`${version}`);
@@ -648,39 +634,6 @@ class AbstractLinks {
             throw new Error(`Invalid version: ${version}`);
         }
         return new URL(urlString);
-    }
-    getLocalURLFromCudnnVersion(version) {
-        const metadata = this.cudnnVersionData.get(`${version}`);
-        if (metadata === undefined) {
-            return undefined;
-        }
-        return new URL(metadata[0]);
-    }
-    compatibleCudnnVersions(cuda_version) {
-        const compatible_versions = Array.from(this.cudnnVersionData.keys()).reduce((acc, v) => {
-            const cudaSemVer = new semver_1.SemVer(cuda_version);
-            const metadata = this.cudnnVersionData.get(v);
-            if (metadata !== undefined) {
-                const [url, cur_compatible_versions] = metadata;
-                const compatible = cur_compatible_versions.filter(c => {
-                    const cv = new semver_1.SemVer(c, true);
-                    if (cv.major !== cudaSemVer.major) {
-                        return false;
-                    }
-                    else if (cv.minor === 0) {
-                        return true;
-                    }
-                    else {
-                        return cv.compare(cudaSemVer) !== 1;
-                    }
-                }).length > 0;
-                if (compatible) {
-                    acc.set(v, url);
-                }
-            }
-            return acc;
-        }, new Map());
-        return compatible_versions;
     }
 }
 exports.AbstractLinks = AbstractLinks;
@@ -703,17 +656,12 @@ class LinuxLinks extends links_1.AbstractLinks {
     // Private constructor to prevent instantiation
     constructor() {
         super();
-        this.cudnnVersionData = new Map([
-            [
-                '8.7.0',
-                [
-                    'https://developer.nvidia.com/downloads/c118-cudnn-linux-8664-87084cuda11-archivetarz',
-                    ['11.0.0']
-                ]
-            ]
-        ]);
         // Map of cuda SemVer version to download URL
         this.cudaVersionToURL = new Map([
+            [
+                '12.0.0',
+                'https://developer.download.nvidia.com/compute/cuda/12.0.0/local_installers/cuda_12.0.0_525.60.13_linux.run'
+            ],
             [
                 '11.8.0',
                 'https://developer.download.nvidia.com/compute/cuda/11.8.0/local_installers/cuda_11.8.0_520.61.05_linux.run'
@@ -853,6 +801,10 @@ class WindowsLinks extends links_1.AbstractLinks {
         super();
         this.cudaVersionToNetworkUrl = new Map([
             [
+                '12.0.0',
+                'https://developer.download.nvidia.com/compute/cuda/12.0.0/network_installers/cuda_12.0.0_windows_network.exe'
+            ],
+            [
                 '11.8.0',
                 'https://developer.download.nvidia.com/compute/cuda/11.8.0/network_installers/cuda_11.8.0_windows_network.exe'
             ],
@@ -949,17 +901,12 @@ class WindowsLinks extends links_1.AbstractLinks {
                 'https://developer.nvidia.com/compute/cuda/8.0/Prod2/network_installers/cuda_8.0.61_win10_network-exe'
             ]
         ]);
-        this.cudnnVersionData = new Map([
-            [
-                '8.7.0',
-                [
-                    'https://developer.nvidia.com/downloads/c118-cudnn-windows-8664-87084cuda11-archivezip',
-                    ['11.0.0']
-                ]
-            ]
-        ]);
         // Map of cuda SemVer version to download URL
         this.cudaVersionToURL = new Map([
+            [
+                '12.0.0',
+                'https://developer.download.nvidia.com/compute/cuda/12.0.0/local_installers/cuda_12.0.0_527.41_windows.exe'
+            ],
             [
                 '11.8.0',
                 'https://developer.download.nvidia.com/compute/cuda/11.8.0/local_installers/cuda_11.8.0_522.06_windows.exe'
@@ -1514,19 +1461,15 @@ function getVersion(cudaVersionString, cudnnVersionString, cudnnDownloadURL, met
         switch (method) {
             case 'local':
                 versions = links.getAvailableLocalCudaVersions();
-                cudnn_versions = links.getAvailableLocalCudnnVersions(cudaVersionString);
                 break;
             case 'network':
                 switch (yield (0, platform_1.getOs)()) {
                     case platform_1.OSType.linux:
                         // TODO adapt this to actual available network versions for linux
                         versions = links.getAvailableLocalCudaVersions();
-                        cudnn_versions =
-                            links.getAvailableLocalCudnnVersions(cudaVersionString);
                         break;
                     case platform_1.OSType.windows:
                         versions = links.getAvailableNetworkCudaVersions();
-                        cudnn_versions = links.getAvailableLocalCudnnVersions(cudaVersionString);
                         break;
                 }
         }
