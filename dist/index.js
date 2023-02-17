@@ -659,6 +659,10 @@ class LinuxLinks extends links_1.AbstractLinks {
         // Map of cuda SemVer version to download URL
         this.cudaVersionToURL = new Map([
             [
+                '12.0.1',
+                'https://developer.download.nvidia.com/compute/cuda/12.0.1/local_installers/cuda_12.0.1_525.85.12_linux.run'
+            ],
+            [
                 '12.0.0',
                 'https://developer.download.nvidia.com/compute/cuda/12.0.0/local_installers/cuda_12.0.0_525.60.13_linux.run'
             ],
@@ -801,6 +805,10 @@ class WindowsLinks extends links_1.AbstractLinks {
         super();
         this.cudaVersionToNetworkUrl = new Map([
             [
+                '12.0.1',
+                'https://developer.download.nvidia.com/compute/cuda/12.0.1/network_installers/cuda_12.0.1_windows_network.exe'
+            ],
+            [
                 '12.0.0',
                 'https://developer.download.nvidia.com/compute/cuda/12.0.0/network_installers/cuda_12.0.0_windows_network.exe'
             ],
@@ -903,6 +911,10 @@ class WindowsLinks extends links_1.AbstractLinks {
         ]);
         // Map of cuda SemVer version to download URL
         this.cudaVersionToURL = new Map([
+            [
+                '12.0.1',
+                'https://developer.download.nvidia.com/compute/cuda/12.0.1/local_installers/cuda_12.0.1_528.33_windows.exe'
+            ],
             [
                 '12.0.0',
                 'https://developer.download.nvidia.com/compute/cuda/12.0.0/local_installers/cuda_12.0.0_527.41_windows.exe'
