@@ -21,7 +21,7 @@ export async function download(
   const cudnnToolName = 'cudnn_archive'
   const osType = await getOs()
   const osRelease = await getRelease()
-  const toolId = `${toolName}-${osType}-${osRelease}`
+  const toolId = `${toolName}-${method}-${osType}-${osRelease}`
   const cudnnToolId = `${cudnnToolName}-${osType}-${osRelease}`
 
   // Path that contains the executable file
