@@ -1,6 +1,6 @@
 name: 'cuda-toolkit'
 description: 'Installs NVIDIA CUDA Toolkit and adds it to PATH'
-author: 'Jim Verheijde'
+author: 'Jim Verheijde, Cocoa Xu'
 inputs:
   cuda:
     description: 'CUDA version'
@@ -35,7 +35,7 @@ inputs:
     required: false
     default: 'true'
 runs:
-  using: 'node16'
+  using: 'node20'
   main: dist/index.js
 branding:
   icon: box
