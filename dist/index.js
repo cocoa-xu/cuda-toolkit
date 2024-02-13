@@ -467,9 +467,9 @@ function installCudnn(cudnnArchivePath, directoryName, cudaPath) {
                     '-command',
                     'Expand-Archive',
                     '-LiteralPath',
-                    `"${cudnnArchivePath}"`,
+                    `'${cudnnArchivePath}'`,
                     '-DestinationPath',
-                    `"${cudaPath}"`,
+                    `'${cudaPath}'`,
                     '-force'
                 ];
                 fileExt = (0, downloader_1.getFileExtension)(platform_1.OSType.windows, platform_1.DownloadType.cudnn);
@@ -503,12 +503,12 @@ function installCudnn(cudnnArchivePath, directoryName, cudaPath) {
                     '-command',
                     'Get-ChildItem',
                     '-Path',
-                    `"${cudaPath}\\${filename}\\bin\\\\*.dll"`,
+                    `'${cudaPath}\\${filename}\\bin\\*.dll'`,
                     '-Recurse',
                     '|',
                     'Move-Item',
                     '-Destination',
-                    `"${cudaPath}\\bin"`,
+                    `'${cudaPath}\\bin'`,
                     '-force'
                 ];
                 break;

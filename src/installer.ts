@@ -122,9 +122,9 @@ export async function installCudnn(
         '-command',
         'Expand-Archive',
         '-LiteralPath',
-        `"${cudnnArchivePath}"`,
+        `'${cudnnArchivePath}'`,
         '-DestinationPath',
-        `"${cudaPath}"`,
+        `'${cudaPath}'`,
         '-force'
       ]
       fileExt = getFileExtension(OSType.windows, DownloadType.cudnn)
@@ -160,12 +160,12 @@ export async function installCudnn(
         '-command',
         'Get-ChildItem',
         '-Path',
-        `"${cudaPath}\\${filename}\\bin\\\\*.dll"`,
+        `'${cudaPath}\\${filename}\\bin\\*.dll'`,
         '-Recurse',
         '|',
         'Move-Item',
         '-Destination',
-        `"${cudaPath}\\bin"`,
+        `'${cudaPath}\\bin'`,
         '-force'
       ]
       break
