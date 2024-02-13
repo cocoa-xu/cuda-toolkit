@@ -8,7 +8,7 @@ This action installs the [NVIDIA® CUDA® Toolkit](https://developer.nvidia.com/
 
 **Optional** The CUDA version to install. View `src/link/windows-links.ts` and `src/link/linux-links.ts` for available versions.
 
-Default: `'11.8.0'`.
+Default: `'12.3.2'`.
 
 ### `cudnn`, `cudnn_url` and `cudnn_archive_dir`
 
