@@ -20,14 +20,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2022, windows-2019, ubuntu-22.04, ubuntu-20.04, ubuntu-18.04]
+        os: [windows-2022, windows-2019, ubuntu-22.04, ubuntu-20.04]
         method: [local, network]
     runs-on: ${{ matrix.os }}
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
 
       # npm cache
       - name: Get npm cache directory
