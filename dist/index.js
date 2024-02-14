@@ -489,7 +489,8 @@ function installCudnn(cudnnArchivePath, directoryName, cudaPath) {
         let filename = directoryName;
         filename = filename.substring(0, filename.lastIndexOf(fileExt) - 1);
         // move everything unarchived
-        core.debug(`moving cudnn files: ${cudnnArchivePath}`);
+        core.debug(`moving cuDNN shared libraries: ${cudnnArchivePath}`);
+        const options = { force: true, recursive: true, copySourceDirectory: false };
         switch (yield (0, platform_1.getOs)()) {
             case platform_1.OSType.linux:
                 command = `sudo bash`;
@@ -502,56 +503,39 @@ function installCudnn(cudnnArchivePath, directoryName, cudaPath) {
                     core.debug(`exit code: ${exitCode}`);
                 }
                 catch (error) {
-                    core.debug(`Error during installation: ${error}`);
+                    core.debug(`Error during install cuDNN shared libraries: ${error}`);
                     throw error;
                 }
                 break;
             case platform_1.OSType.windows:
-                const options = { force: true, recursive: true, copySourceDirectory: false };
-                yield io.cp(`${cudaPath}/${filename}/bin`, `${cudaPath}/bin`, options);
-                yield io.rmRF(`${cudaPath}/${filename}/bin`);
+                try {
+                    yield io.cp(`${cudaPath}\\${filename}\\bin`, `${cudaPath}\\bin`, options);
+                    yield io.rmRF(`${cudaPath}\\${filename}\\bin`);
+                }
+                catch (error) {
+                    core.debug(`Error during install cuDNN shared libraries: ${error}`);
+                    throw error;
+                }
                 break;
         }
         switch (yield (0, platform_1.getOs)()) {
             case platform_1.OSType.windows:
                 try {
-                    core.debug(`moving cudnn files: ${cudnnArchivePath}`);
-                    const options = {
-                        force: true,
-                        recursive: true,
-                        copySourceDirectory: false
-                    };
-                    yield io.cp(`${cudaPath}/${filename}/include`, `${cudaPath}/include`, options);
-                    yield io.rmRF(`${cudaPath}/${filename}/include`);
+                    core.debug(`moving cuDNN header files: ${cudnnArchivePath}`);
+                    yield io.cp(`${cudaPath}\\${filename}\\include`, `${cudaPath}\\include`, options);
+                    yield io.rmRF(`${cudaPath}\\${filename}\\include`);
                 }
                 catch (error) {
-                    core.debug(`Error during installation: ${error}`);
+                    core.debug(`Error during install cuDNN header files: ${error}`);
                     throw error;
                 }
-                installArgs = [
-                    '-command',
-                    'Get-ChildItem',
-                    '-Path',
-                    `"${cudaPath}\\${filename}\\lib\\x64\\\\*.lib"`,
-                    '-Recurse',
-                    '|',
-                    'Move-Item',
-                    '-Destination',
-                    `"${cudaPath}\\lib\\x64"`,
-                    '-force'
-                ];
                 try {
-                    core.debug(`moving cudnn files: ${cudnnArchivePath}`);
-                    const options = {
-                        force: true,
-                        recursive: true,
-                        copySourceDirectory: false
-                    };
-                    yield io.cp(`${cudaPath}/${filename}/lib/x64`, `${cudaPath}/lib/x64`, options);
-                    yield io.rmRF(`${cudaPath}/${filename}/lib/x64`);
+                    core.debug(`moving cuDNN lib files: ${cudnnArchivePath}`);
+                    yield io.cp(`${cudaPath}\\${filename}\\lib\\x64`, `${cudaPath}\\lib\\x64`, options);
+                    yield io.rmRF(`${cudaPath}\\${filename}\\lib\\x64`);
                 }
                 catch (error) {
-                    core.debug(`Error during installation: ${error}`);
+                    core.debug(`Error during install cuDNN lib files: ${error}`);
                     throw error;
                 }
                 break;

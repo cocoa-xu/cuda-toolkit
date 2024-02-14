@@ -146,7 +146,8 @@ export async function installCudnn(
   let filename: string = directoryName
   filename = filename.substring(0, filename.lastIndexOf(fileExt) - 1)
   // move everything unarchived
-  core.debug(`moving cudnn files: ${cudnnArchivePath}`)
+  core.debug(`moving cuDNN shared libraries: ${cudnnArchivePath}`)
+  const options = {force: true, recursive: true, copySourceDirectory: false}
   switch (await getOs()) {
     case OSType.linux:
       command = `sudo bash`
@@ -158,64 +159,50 @@ export async function installCudnn(
         const exitCode = await exec(command, installArgs, execOptions)
         core.debug(`exit code: ${exitCode}`)
       } catch (error) {
-        core.debug(`Error during installation: ${error}`)
+        core.debug(`Error during install cuDNN shared libraries: ${error}`)
         throw error
       }
       break
     case OSType.windows:
-      const options = {force: true, recursive: true, copySourceDirectory: false}
-      await io.cp(`${cudaPath}/${filename}/bin`, `${cudaPath}/bin`, options)
-      await io.rmRF(`${cudaPath}/${filename}/bin`)
+      try {
+        await io.cp(
+          `${cudaPath}\\${filename}\\bin`,
+          `${cudaPath}\\bin`,
+          options
+        )
+        await io.rmRF(`${cudaPath}\\${filename}\\bin`)
+      } catch (error) {
+        core.debug(`Error during install cuDNN shared libraries: ${error}`)
+        throw error
+      }
       break
   }
 
   switch (await getOs()) {
     case OSType.windows:
       try {
-        core.debug(`moving cudnn files: ${cudnnArchivePath}`)
-        const options = {
-          force: true,
-          recursive: true,
-          copySourceDirectory: false
-        }
+        core.debug(`moving cuDNN header files: ${cudnnArchivePath}`)
         await io.cp(
-          `${cudaPath}/${filename}/include`,
-          `${cudaPath}/include`,
+          `${cudaPath}\\${filename}\\include`,
+          `${cudaPath}\\include`,
           options
         )
-        await io.rmRF(`${cudaPath}/${filename}/include`)
+        await io.rmRF(`${cudaPath}\\${filename}\\include`)
       } catch (error) {
-        core.debug(`Error during installation: ${error}`)
+        core.debug(`Error during install cuDNN header files: ${error}`)
         throw error
       }
 
-      installArgs = [
-        '-command',
-        'Get-ChildItem',
-        '-Path',
-        `"${cudaPath}\\${filename}\\lib\\x64\\\\*.lib"`,
-        '-Recurse',
-        '|',
-        'Move-Item',
-        '-Destination',
-        `"${cudaPath}\\lib\\x64"`,
-        '-force'
-      ]
       try {
-        core.debug(`moving cudnn files: ${cudnnArchivePath}`)
-        const options = {
-          force: true,
-          recursive: true,
-          copySourceDirectory: false
-        }
+        core.debug(`moving cuDNN lib files: ${cudnnArchivePath}`)
         await io.cp(
-          `${cudaPath}/${filename}/lib/x64`,
-          `${cudaPath}/lib/x64`,
+          `${cudaPath}\\${filename}\\lib\\x64`,
+          `${cudaPath}\\lib\\x64`,
           options
         )
-        await io.rmRF(`${cudaPath}/${filename}/lib/x64`)
+        await io.rmRF(`${cudaPath}\\${filename}\\lib\\x64`)
       } catch (error) {
-        core.debug(`Error during installation: ${error}`)
+        core.debug(`Error during install cuDNN lib files: ${error}`)
         throw error
       }
       break
