@@ -3,7 +3,6 @@ import * as core from '@actions/core'
 import {OSType, getOs, CUDAToolkit, DownloadType} from './platform'
 import {exec} from '@actions/exec'
 import {getFileExtension} from './downloader'
-import * as path from 'path'
 import * as io from '@actions/io'
 
 export async function install(
