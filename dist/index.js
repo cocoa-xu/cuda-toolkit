@@ -489,6 +489,7 @@ function installCudnn(cudnnArchivePath, directoryName, cudaPath) {
         let filename = directoryName;
         filename = filename.substring(0, filename.lastIndexOf(fileExt) - 1);
         // move everything unarchived
+        core.debug(`moving cudnn files: ${cudnnArchivePath}`);
         switch (yield (0, platform_1.getOs)()) {
             case platform_1.OSType.linux:
                 command = `sudo bash`;
@@ -496,51 +497,28 @@ function installCudnn(cudnnArchivePath, directoryName, cudaPath) {
                     '-c',
                     `mv "${cudaPath}/${filename}/lib/*" "${cudaPath}/lib/" && mv "${cudaPath}/${filename}/include/*" "${cudaPath}/include/"`
                 ];
+                try {
+                    const exitCode = yield (0, exec_1.exec)(command, installArgs, execOptions);
+                    core.debug(`exit code: ${exitCode}`);
+                }
+                catch (error) {
+                    core.debug(`Error during installation: ${error}`);
+                    throw error;
+                }
                 break;
             case platform_1.OSType.windows:
-                command = 'powershell';
-                installArgs = [
-                    '-command',
-                    'Get-ChildItem',
-                    '-Path',
-                    `'${cudaPath}\\${filename}\\bin\\*.dll'`,
-                    '-Recurse',
-                    '|',
-                    'Move-Item',
-                    '-Destination',
-                    `'${cudaPath}\\bin'`,
-                    '-force'
-                ];
+                const options = { force: true, recursive: true, copySourceDirectory: false };
+                yield io.cp(`${cudaPath}/${filename}/bin`, `${cudaPath}/bin`, options);
+                yield io.rmRF(`${cudaPath}/${filename}/bin`);
                 break;
-        }
-        try {
-            core.debug(`moving cudnn files: ${cudnnArchivePath}`);
-            const exitCode = yield (0, exec_1.exec)(command, installArgs, execOptions);
-            core.debug(`exit code: ${exitCode}`);
-        }
-        catch (error) {
-            core.debug(`Error during installation: ${error}`);
-            throw error;
         }
         switch (yield (0, platform_1.getOs)()) {
             case platform_1.OSType.windows:
-                command = 'powershell';
-                installArgs = [
-                    '-command',
-                    'Get-ChildItem',
-                    '-Path',
-                    `"${cudaPath}\\${filename}\\include\\\\*.h"`,
-                    '-Recurse',
-                    '|',
-                    'Move-Item',
-                    '-Destination',
-                    `"${cudaPath}\\include"`,
-                    '-force'
-                ];
                 try {
                     core.debug(`moving cudnn files: ${cudnnArchivePath}`);
-                    const exitCode = yield (0, exec_1.exec)(command, installArgs, execOptions);
-                    core.debug(`exit code: ${exitCode}`);
+                    const options = { force: true, recursive: true, copySourceDirectory: false };
+                    yield io.cp(`${cudaPath}/${filename}/include`, `${cudaPath}/include`, options);
+                    yield io.rmRF(`${cudaPath}/${filename}/include`);
                 }
                 catch (error) {
                     core.debug(`Error during installation: ${error}`);
@@ -560,8 +538,9 @@ function installCudnn(cudnnArchivePath, directoryName, cudaPath) {
                 ];
                 try {
                     core.debug(`moving cudnn files: ${cudnnArchivePath}`);
-                    const exitCode = yield (0, exec_1.exec)(command, installArgs, execOptions);
-                    core.debug(`exit code: ${exitCode}`);
+                    const options = { force: true, recursive: true, copySourceDirectory: false };
+                    yield io.cp(`${cudaPath}/${filename}/lib/x64`, `${cudaPath}/lib/x64`, options);
+                    yield io.rmRF(`${cudaPath}/${filename}/lib/x64`);
                 }
                 catch (error) {
                     core.debug(`Error during installation: ${error}`);

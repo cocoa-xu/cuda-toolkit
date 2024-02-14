@@ -146,6 +146,7 @@ export async function installCudnn(
   let filename: string = directoryName
   filename = filename.substring(0, filename.lastIndexOf(fileExt) - 1)
   // move everything unarchived
+  core.debug(`moving cudnn files: ${cudnnArchivePath}`)
   switch (await getOs()) {
     case OSType.linux:
       command = `sudo bash`
@@ -153,51 +154,36 @@ export async function installCudnn(
         '-c',
         `mv "${cudaPath}/${filename}/lib/*" "${cudaPath}/lib/" && mv "${cudaPath}/${filename}/include/*" "${cudaPath}/include/"`
       ]
+      try {
+        const exitCode = await exec(command, installArgs, execOptions)
+        core.debug(`exit code: ${exitCode}`)
+      } catch (error) {
+        core.debug(`Error during installation: ${error}`)
+        throw error
+      }
       break
     case OSType.windows:
-      command = 'powershell'
-      installArgs = [
-        '-command',
-        'Get-ChildItem',
-        '-Path',
-        `'${cudaPath}\\${filename}\\bin\\*.dll'`,
-        '-Recurse',
-        '|',
-        'Move-Item',
-        '-Destination',
-        `'${cudaPath}\\bin'`,
-        '-force'
-      ]
+      const options = {force: true, recursive: true, copySourceDirectory: false}
+      await io.cp(`${cudaPath}/${filename}/bin`, `${cudaPath}/bin`, options)
+      await io.rmRF(`${cudaPath}/${filename}/bin`)
       break
-  }
-  try {
-    core.debug(`moving cudnn files: ${cudnnArchivePath}`)
-    const exitCode = await exec(command, installArgs, execOptions)
-    core.debug(`exit code: ${exitCode}`)
-  } catch (error) {
-    core.debug(`Error during installation: ${error}`)
-    throw error
   }
 
   switch (await getOs()) {
     case OSType.windows:
-      command = 'powershell'
-      installArgs = [
-        '-command',
-        'Get-ChildItem',
-        '-Path',
-        `"${cudaPath}\\${filename}\\include\\\\*.h"`,
-        '-Recurse',
-        '|',
-        'Move-Item',
-        '-Destination',
-        `"${cudaPath}\\include"`,
-        '-force'
-      ]
       try {
         core.debug(`moving cudnn files: ${cudnnArchivePath}`)
-        const exitCode = await exec(command, installArgs, execOptions)
-        core.debug(`exit code: ${exitCode}`)
+        const options = {
+          force: true,
+          recursive: true,
+          copySourceDirectory: false
+        }
+        await io.cp(
+          `${cudaPath}/${filename}/include`,
+          `${cudaPath}/include`,
+          options
+        )
+        await io.rmRF(`${cudaPath}/${filename}/include`)
       } catch (error) {
         core.debug(`Error during installation: ${error}`)
         throw error
@@ -217,8 +203,17 @@ export async function installCudnn(
       ]
       try {
         core.debug(`moving cudnn files: ${cudnnArchivePath}`)
-        const exitCode = await exec(command, installArgs, execOptions)
-        core.debug(`exit code: ${exitCode}`)
+        const options = {
+          force: true,
+          recursive: true,
+          copySourceDirectory: false
+        }
+        await io.cp(
+          `${cudaPath}/${filename}/lib/x64`,
+          `${cudaPath}/lib/x64`,
+          options
+        )
+        await io.rmRF(`${cudaPath}/${filename}/lib/x64`)
       } catch (error) {
         core.debug(`Error during installation: ${error}`)
         throw error
