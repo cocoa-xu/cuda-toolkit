@@ -516,7 +516,11 @@ function installCudnn(cudnnArchivePath, directoryName, cudaPath) {
             case platform_1.OSType.windows:
                 try {
                     core.debug(`moving cudnn files: ${cudnnArchivePath}`);
-                    const options = { force: true, recursive: true, copySourceDirectory: false };
+                    const options = {
+                        force: true,
+                        recursive: true,
+                        copySourceDirectory: false
+                    };
                     yield io.cp(`${cudaPath}/${filename}/include`, `${cudaPath}/include`, options);
                     yield io.rmRF(`${cudaPath}/${filename}/include`);
                 }
@@ -538,7 +542,11 @@ function installCudnn(cudnnArchivePath, directoryName, cudaPath) {
                 ];
                 try {
                     core.debug(`moving cudnn files: ${cudnnArchivePath}`);
-                    const options = { force: true, recursive: true, copySourceDirectory: false };
+                    const options = {
+                        force: true,
+                        recursive: true,
+                        copySourceDirectory: false
+                    };
                     yield io.cp(`${cudaPath}/${filename}/lib/x64`, `${cudaPath}/lib/x64`, options);
                     yield io.rmRF(`${cudaPath}/${filename}/lib/x64`);
                 }

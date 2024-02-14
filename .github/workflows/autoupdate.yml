@@ -20,26 +20,20 @@ jobs:
           CUDA_VERSION="$(curl -fSL https://developer.nvidia.com/cuda-toolkit-archive | grep -E -oh 'CUDA Toolkit (\d+).(\d+).(\d+)(\s*)</a>' | grep -E -oh '(\d+).(\d+).(\d+)' | sort -nr | head -n1)"
           echo "Latest CUDA version: ${CUDA_VRESION}"
           echo "tag=v${CUDA_VERSION}" >> $GITHUB_OUTPUT
-
-      - name: Check if tag exists
-        uses: mukunku/tag-exists-action@v1.5.0
-        id: check-tag
-        with: 
-          tag: ${{ steps.cuda-version.outputs.tag }}
-          repo: 'cocoa-xu/cuda-toolkit'
+          grep "${CUDA_VERSION}" src/links/linux-links.ts && echo "exists=true" >> $GITHUB_OUTPUT || echo "exists=false" >> $GITHUB_OUTPUT
 
       - name: Set Node.js 20.x
-        if: steps.check-tag.outputs.exists == 'false'
+        if: steps.cuda-version.outputs.exists == 'false'
         uses: actions/setup-node@v3
         with:
           node-version: 20
 
       - name: Install dependencies
-        if: steps.check-tag.outputs.exists == 'false'
+        if: steps.cuda-version.outputs.exists == 'false'
         run: npm ci
       
       - name: Update if tag not exists
-        if: steps.check-tag.outputs.exists == 'false'
+        if: steps.cuda-version.outputs.exists == 'false'
         run: |
           curl -fSL https://developer.nvidia.com/cuda-downloads.json -o cuda-downloads.json
           CUDA_VERSION=${{ steps.cuda-version.outputs.tag }}
@@ -87,10 +81,6 @@ jobs:
           tail -n "+${$((LINE + 1))}" src/links/windows-links.ts >> new-windows-links.ts
           mv new-windows-links.ts src/links/windows-links.ts
 
-          // Update package.json
-          jq -r ".version = \"${CUDA_VERSION}\"" package.json > new-package.json
-          mv new-package.json package.json
-
           npm run build && npm run format && npm run lint && npm run package
 
           git config user.name github-actions
@@ -98,5 +88,3 @@ jobs:
           git add src/links/linux-links.ts src/links/windows-links.ts dist/* package.json
           git commit -m "Update CUDA version to ${CUDA_VERSION}"
           git push
-          git tag ${CUDA_VERSION}
-          git push origin ${CUDA_VERSION}
