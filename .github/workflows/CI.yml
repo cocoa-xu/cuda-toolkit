@@ -23,6 +23,9 @@ jobs:
         os: [windows-2019, ubuntu-22.04, ubuntu-20.04]
         method: [local, network]
     runs-on: ${{ matrix.os }}
+    env:
+      CUDA_V890_WINDOWS_X86_64_CUDA12: ${{ secrets.CUDA_V890_WINDOWS_X86_64_CUDA12 }}
+      CUDA_V890_LINUX_X86_64_CUDA12: ${{ secrets.CUDA_V890_LINUX_X86_64_CUDA12 }}
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -67,19 +70,23 @@ jobs:
         with:
           method: ${{matrix.method}}
 
-      - name: Run the action on this runner with nvcc subpackage only (Linux)
+      - name: Run the action on this runner with nvcc subpackage and cuDNN 8.9.0 (Linux)
         if: runner.os == 'Linux' && matrix.method == 'network'
         uses: ./
         with:
           method: ${{matrix.method}}
           sub-packages: '["nvcc"]'
+          cudnn: '8.9.0'
+          cudnn_url: ${{ secrets.CUDA_V890_LINUX_X86_64_CUDA12 }}
 
-      - name: Run the action on this runner with nvcc subpackage only (Windows)
+      - name: Run the action on this runner with nvcc subpackage and cuDNN 8.9.0 (Windows)
         if: runner.os == 'Windows'
         uses: ./
         with:
           method: ${{matrix.method}}
           sub-packages: '["nvcc"]'
+          cudnn: '8.9.0'
+          cudnn_url: ${{ secrets.CUDA_V890_WINDOWS_X86_64_CUDA12 }}
 
       - name: Test if nvcc is available
         run: nvcc -V
