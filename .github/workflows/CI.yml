@@ -26,6 +26,7 @@ jobs:
     env:
       CUDA_V890_WINDOWS_X86_64_CUDA12: ${{ secrets.CUDA_V890_WINDOWS_X86_64_CUDA12 }}
       CUDA_V890_LINUX_X86_64_CUDA12: ${{ secrets.CUDA_V890_LINUX_X86_64_CUDA12 }}
+      ACTIONS_STEP_DEBUG: true
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
