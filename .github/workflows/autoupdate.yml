@@ -17,7 +17,7 @@ jobs:
       - name: Get latest version
         id: cuda-version
         run: |
-          CUDA_VERSION="$(curl -fSL https://developer.nvidia.com/cuda-toolkit-archive | grep -E -oh 'CUDA Toolkit (\d+).(\d+).(\d+)(\s*)</a>' | grep -E -oh '(\d+).(\d+).(\d+)' | sort -nr | head -n1)"
+          CUDA_VERSION="$(curl -fSL https://developer.nvidia.com/cuda-toolkit-archive | grep -P -oh 'CUDA Toolkit (\d+).(\d+).(\d+)(\s*)</a>' | grep -P -oh '(\d+).(\d+).(\d+)' | sort -nr | head -n1)"
           echo "Latest CUDA version: ${CUDA_VRESION}"
           echo "tag=v${CUDA_VERSION}" >> $GITHUB_OUTPUT
           grep "${CUDA_VERSION}" src/links/linux-links.ts && echo "exists=true" >> $GITHUB_OUTPUT || echo "exists=false" >> $GITHUB_OUTPUT
@@ -37,9 +37,9 @@ jobs:
         run: |
           curl -fSL https://developer.nvidia.com/cuda-downloads.json -o cuda-downloads.json
           CUDA_VERSION=${{ steps.cuda-version.outputs.tag }}
-          LINUX_X86_64_LOCAL_RUNFILE="$(cat cuda-downloads.json | jq -r '[.data | .releases | .[] | select(.arch=="x86_64" and .os=="Linux" and .format=="runfile" and .installer=="local" and .distro_name=="Ubuntu")] | sort_by(.distro_version) | first | .details' | grep -E -oh 'targetDownloadButtonHref" href="(.*?)"' | grep -E -oh 'https://(.*?).run')"
-          WINDOWS_X86_64_LOCAL="$(cat cuda-downloads.json| jq -r '[.data | .releases | .[] | select(.arch=="x86_64" and .os=="Windows" and .installer=="local" and .os_version=="Server2019")] | first | .details' | grep -E -oh 'targetDownloadButtonHref" href="(.*?)"' | grep -E -oh 'https://(.*?).exe')"
-          WINDOWS_X86_64_NETWORK="$(cat cuda-downloads.json| jq -r '[.data | .releases | .[] | select(.arch=="x86_64" and .os=="Windows" and .installer=="network" and .os_version=="Server2019")] | first | .details' | grep -E -oh 'targetDownloadButtonHref" href="(.*?)"' | grep -E -oh 'https://(.*?).exe')"
+          LINUX_X86_64_LOCAL_RUNFILE="$(cat cuda-downloads.json | jq -r '[.data | .releases | .[] | select(.arch=="x86_64" and .os=="Linux" and .format=="runfile" and .installer=="local" and .distro_name=="Ubuntu")] | sort_by(.distro_version) | first | .details' | grep -P -oh 'targetDownloadButtonHref" href="(.*?)"' | grep -P -oh 'https://(.*?).run')"
+          WINDOWS_X86_64_LOCAL="$(cat cuda-downloads.json| jq -r '[.data | .releases | .[] | select(.arch=="x86_64" and .os=="Windows" and .installer=="local" and .os_version=="Server2019")] | first | .details' | grep -P -oh 'targetDownloadButtonHref" href="(.*?)"' | grep -P -oh 'https://(.*?).exe')"
+          WINDOWS_X86_64_NETWORK="$(cat cuda-downloads.json| jq -r '[.data | .releases | .[] | select(.arch=="x86_64" and .os=="Windows" and .installer=="network" and .os_version=="Server2019")] | first | .details' | grep -P -oh 'targetDownloadButtonHref" href="(.*?)"' | grep -P -oh 'https://(.*?).exe')"
           echo "Linux x86_64 local runfile: ${LINUX_X86_64_LOCAL_RUNFILE}"
           echo "Windows x86_64 local installer: ${WINDOWS_X86_64_LOCAL}"
           echo "Windows x86_64 network installer: ${WINDOWS_X86_64_NETWORK}"
