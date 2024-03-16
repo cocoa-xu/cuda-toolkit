@@ -79,10 +79,10 @@ jobs:
           LINE="$(grep -n 'private cudaVersionToNetworkUrl' src/links/windows-links.ts | awk -F: '{print $1}')"
           head -n "${LINE}" src/links/windows-links.ts > new-windows-links.ts
           cat <<EOF >> new-windows-links.ts
-                [
-                  '${CUDA_VERSION}',
-                  '${WINDOWS_X86_64_NETWORK}'
-                ],
+              [
+                '${CUDA_VERSION}',
+                '${WINDOWS_X86_64_NETWORK}'
+              ],
           EOF
           LINE=$((LINE + 1))
           tail -n "+${LINE}" src/links/windows-links.ts >> new-windows-links.ts
