@@ -58,7 +58,8 @@ jobs:
                   '${LINUX_X86_64_LOCAL_RUNFILE}'
                 ],
           EOF
-          tail -n "+${$((LINE + 1))}" src/links/linux-links.ts >> new-linux-links.ts
+          LINE=$((LINE + 1))
+          tail -n "+${LINE}" src/links/linux-links.ts >> new-linux-links.ts
           mv new-linux-links.ts src/links/linux-links.ts
 
           # Update src/links/windows-links.ts (local installer)
@@ -70,7 +71,8 @@ jobs:
                   '${WINDOWS_X86_64_LOCAL}'
                 ],
           EOF
-          tail -n "+${$((LINE + 1))}" src/links/windows-links.ts >> new-windows-links.ts
+          LINE=$((LINE + 1))
+          tail -n "+${LINE}" src/links/windows-links.ts >> new-windows-links.ts
           mv new-windows-links.ts src/links/windows-links.ts
 
           # Update src/links/windows-links.ts (network installer)
@@ -82,7 +84,8 @@ jobs:
                   '${WINDOWS_X86_64_NETWORK}'
                 ],
           EOF
-          tail -n "+${$((LINE + 1))}" src/links/windows-links.ts >> new-windows-links.ts
+          LINE=$((LINE + 1))
+          tail -n "+${LINE}" src/links/windows-links.ts >> new-windows-links.ts
           mv new-windows-links.ts src/links/windows-links.ts
 
           npm run build && npm run format && npm run lint && npm run package
