@@ -41,10 +41,10 @@ jobs:
           LINUX_X86_64_LOCAL_RUNFILE="$(cat cuda-downloads.json | jq -r '[.data | .releases | .[] | select(.arch=="x86_64" and .os=="Linux" and .format=="runfile" and .installer=="local" and .distro_name=="Ubuntu")] | sort_by(.distro_version) | first | .details' | grep -P -oh 'targetDownloadButtonHref" href="(.*?)"' | grep -P -oh 'https://(.*?).run')"
           echo "Linux x86_64 local runfile: ${LINUX_X86_64_LOCAL_RUNFILE}"
 
-          WINDOWS_X86_64_LOCAL="$(cat cuda-downloads.json| jq -r '[.data | .releases | .[] | select(.arch=="x86_64" and .os=="Windows" and .installer=="local" and .os_version=="Server2019")] | first | .details' | grep -P -oh 'targetDownloadButtonHref" href="(.*?)"' | grep -P -oh 'https://(.*?).exe')"
+          WINDOWS_X86_64_LOCAL="$(cat cuda-downloads.json| jq -r '[.data | .releases | .[] | select(.arch=="x86_64" and .os=="Windows" and .installer=="local" and .os_version=="Server2022")] | first | .details' | grep -P -oh 'targetDownloadButtonHref" href="(.*?)"' | grep -P -oh 'https://(.*?).exe')"
           echo "Windows x86_64 local installer: ${WINDOWS_X86_64_LOCAL}"
 
-          WINDOWS_X86_64_NETWORK="$(cat cuda-downloads.json| jq -r '[.data | .releases | .[] | select(.arch=="x86_64" and .os=="Windows" and .installer=="network" and .os_version=="Server2019")] | first | .details' | grep -P -oh 'targetDownloadButtonHref" href="(.*?)"' | grep -P -oh 'https://(.*?).exe')"
+          WINDOWS_X86_64_NETWORK="$(cat cuda-downloads.json| jq -r '[.data | .releases | .[] | select(.arch=="x86_64" and .os=="Windows" and .installer=="network" and .os_version=="Server2022")] | first | .details' | grep -P -oh 'targetDownloadButtonHref" href="(.*?)"' | grep -P -oh 'https://(.*?).exe')"
           echo "Windows x86_64 network installer: ${WINDOWS_X86_64_NETWORK}"
           
           rm -f cuda-downloads.json
