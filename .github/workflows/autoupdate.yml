@@ -49,7 +49,7 @@ jobs:
           
           rm -f cuda-downloads.json
 
-          // Update src/links/linux-links.ts
+          # Update src/links/linux-links.ts
           LINE="$(grep -n 'this.cudaVersionToURL = new Map' src/links/linux-links.ts | awk -F: '{print $1}')"
           head -n "${LINE}" src/links/linux-links.ts > new-linux-links.ts
           cat <<EOF >> new-linux-links.ts
@@ -61,7 +61,7 @@ jobs:
           tail -n "+${$((LINE + 1))}" src/links/linux-links.ts >> new-linux-links.ts
           mv new-linux-links.ts src/links/linux-links.ts
 
-          // Update src/links/windows-links.ts (local installer)
+          # Update src/links/windows-links.ts (local installer)
           LINE="$(grep -n 'this.cudaVersionToURL' src/links/windows-links.ts | awk -F: '{print $1}')"
           head -n "${LINE}" src/links/windows-links.ts > new-windows-links.ts
           cat <<EOF >> new-windows-links.ts
@@ -73,7 +73,7 @@ jobs:
           tail -n "+${$((LINE + 1))}" src/links/windows-links.ts >> new-windows-links.ts
           mv new-windows-links.ts src/links/windows-links.ts
 
-          // Update src/links/windows-links.ts (network installer)
+          # Update src/links/windows-links.ts (network installer)
           LINE="$(grep -n 'private cudaVersionToNetworkUrl' src/links/windows-links.ts | awk -F: '{print $1}')"
           head -n "${LINE}" src/links/windows-links.ts > new-windows-links.ts
           cat <<EOF >> new-windows-links.ts
