@@ -37,6 +37,7 @@ jobs:
         run: |
           curl -fSL https://developer.nvidia.com/cuda-downloads.json -o cuda-downloads.json
           CUDA_VERSION=${{ steps.cuda-version.outputs.tag }}
+          CUDA_VERSION=${CUDA_VERSION##v}
           
           LINUX_X86_64_LOCAL_RUNFILE="$(cat cuda-downloads.json | jq -r '[.data | .releases | .[] | select(.arch=="x86_64" and .os=="Linux" and .format=="runfile" and .installer=="local" and .distro_name=="Ubuntu")] | sort_by(.distro_version) | first | .details' | grep -P -oh 'targetDownloadButtonHref" href="(.*?)"' | grep -P -oh 'https://(.*?).run')"
           echo "Linux x86_64 local runfile: ${LINUX_X86_64_LOCAL_RUNFILE}"
