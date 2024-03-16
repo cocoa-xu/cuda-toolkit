@@ -1,7 +1,7 @@
 import * as artifact from '@actions/artifact'
 import * as core from '@actions/core'
 import {OSType, getOs, CUDAToolkit, DownloadType} from './platform'
-import {exec} from '@actions/exec'
+import {spawn} from 'child_process'
 import {getFileExtension} from './downloader'
 import * as io from '@actions/io'
 
@@ -20,18 +20,6 @@ export async function install(
 
   // Subset of subpackages to install instead of everything, see: https://docs.nvidia.com/cuda/cuda-installation-guide-microsoft-windows/index.html#install-cuda-software
   const subPackages: string[] = subPackagesArray
-
-  // Execution options which contain callback functions for stdout and stderr of install process
-  const execOptions = {
-    listeners: {
-      stdout: (data: Buffer) => {
-        core.debug(data.toString())
-      },
-      stderr: (data: Buffer) => {
-        core.debug(`Error: ${data.toString()}`)
-      }
-    }
-  }
 
   const version = toolkit.cuda_version
   // Configure OS dependent run command and args
@@ -63,7 +51,10 @@ export async function install(
   // Run CUDA installer
   try {
     core.debug(`Running install executable: ${executablePath}`)
-    const exitCode = await exec(command, installArgs, execOptions)
+    const exitCode = await spawn(command, installArgs, {
+      stdio: 'inherit',
+      shell: true
+    })
     core.debug(`Installer exit code: ${exitCode}`)
   } catch (error) {
     core.debug(`Error during installation: ${error}`)
@@ -133,7 +124,10 @@ export async function installCudnn(
   // unarchive cudnn to CUDA directory
   try {
     core.debug(`Unarchiving cudnn files: ${cudnnArchivePath}`)
-    const exitCode = await exec(command, installArgs, execOptions)
+    const exitCode = await spawn(command, installArgs, {
+      stdio: 'inherit',
+      shell: true
+    })
     core.debug(`exit code: ${exitCode}`)
   } catch (error) {
     core.debug(`Error during installation: ${error}`)
@@ -155,7 +149,10 @@ export async function installCudnn(
         `mv "${cudaPath}/${filename}/lib/*" "${cudaPath}/lib/" && mv "${cudaPath}/${filename}/include/*" "${cudaPath}/include/"`
       ]
       try {
-        const exitCode = await exec(command, installArgs, execOptions)
+        const exitCode = await spawn(command, installArgs, {
+          stdio: 'inherit',
+          shell: true
+        })
         core.debug(`exit code: ${exitCode}`)
       } catch (error) {
         core.debug(`Error during install cuDNN shared libraries: ${error}`)
