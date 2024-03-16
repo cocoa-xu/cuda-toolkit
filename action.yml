@@ -5,7 +5,7 @@ inputs:
   cuda:
     description: 'CUDA version'
     required: false
-    default: '12.3.2'
+    default: '12.4.0'
   cudnn:
     description: 'cuDNN version'
     required: false
