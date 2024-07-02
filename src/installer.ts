@@ -4,6 +4,7 @@ import {OSType, getOs, CUDAToolkit, DownloadType} from './platform'
 import {spawn} from 'child_process'
 import {getFileExtension} from './downloader'
 import * as io from '@actions/io'
+import fs from 'fs'
 
 export async function install(
   executablePath: string,
@@ -64,18 +65,20 @@ export async function install(
     if ((await getOs()) === OSType.linux) {
       const artifactClient = artifact.create()
       const artifactName = 'install-log'
-      const files = ['/var/log/cuda-installer.log']
-      const rootDirectory = '/var/log'
-      const artifactOptions = {
-        continueOnError: true
+      const cudaLogPath = '/var/log/cuda-installer.log'
+      if (fs.existsSync(cudaLogPath)) {
+        const rootDirectory = '/'
+        const artifactOptions = {
+          continueOnError: true
+        }
+        const uploadResult = await artifactClient.uploadArtifact(
+          artifactName,
+          [cudaLogPath],
+          rootDirectory,
+          artifactOptions
+        )
+        core.debug(`Upload result: ${uploadResult}`)
       }
-      const uploadResult = await artifactClient.uploadArtifact(
-        artifactName,
-        files,
-        rootDirectory,
-        artifactOptions
-      )
-      core.debug(`Upload result: ${uploadResult}`)
     }
     // await io.rmRF(executablePath)
   }

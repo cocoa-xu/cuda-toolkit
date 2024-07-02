@@ -360,6 +360,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.installCudnn = exports.install = void 0;
 const artifact = __importStar(__nccwpck_require__(2605));
@@ -368,6 +371,7 @@ const platform_1 = __nccwpck_require__(9238);
 const child_process_1 = __nccwpck_require__(2081);
 const downloader_1 = __nccwpck_require__(5587);
 const io = __importStar(__nccwpck_require__(7436));
+const fs_1 = __importDefault(__nccwpck_require__(7147));
 function install(executablePath, toolkit, subPackagesArray, linuxLocalArgsArray) {
     return __awaiter(this, void 0, void 0, function* () {
         // Install arguments, see: https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#runfile-advanced
@@ -419,13 +423,15 @@ function install(executablePath, toolkit, subPackagesArray, linuxLocalArgsArray)
             if ((yield (0, platform_1.getOs)()) === platform_1.OSType.linux) {
                 const artifactClient = artifact.create();
                 const artifactName = 'install-log';
-                const files = ['/var/log/cuda-installer.log'];
-                const rootDirectory = '/var/log';
-                const artifactOptions = {
-                    continueOnError: true
-                };
-                const uploadResult = yield artifactClient.uploadArtifact(artifactName, files, rootDirectory, artifactOptions);
-                core.debug(`Upload result: ${uploadResult}`);
+                const cudaLogPath = '/var/log/cuda-installer.log';
+                if (fs_1.default.existsSync(cudaLogPath)) {
+                    const rootDirectory = '/';
+                    const artifactOptions = {
+                        continueOnError: true
+                    };
+                    const uploadResult = yield artifactClient.uploadArtifact(artifactName, [cudaLogPath], rootDirectory, artifactOptions);
+                    core.debug(`Upload result: ${uploadResult}`);
+                }
             }
             // await io.rmRF(executablePath)
         }
