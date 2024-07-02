@@ -427,7 +427,7 @@ function install(executablePath, toolkit, subPackagesArray, linuxLocalArgsArray)
                 const uploadResult = yield artifactClient.uploadArtifact(artifactName, files, rootDirectory, artifactOptions);
                 core.debug(`Upload result: ${uploadResult}`);
             }
-            yield io.rmRF(executablePath);
+            // await io.rmRF(executablePath)
         }
     });
 }
@@ -480,7 +480,7 @@ function installCudnn(cudnnArchivePath, directoryName, cudaPath) {
             core.debug(`Error during installation: ${error}`);
             throw error;
         }
-        yield io.rmRF(cudnnArchivePath);
+        // await io.rmRF(cudnnArchivePath)
         let filename = directoryName;
         filename = filename.substring(0, filename.lastIndexOf(fileExt) - 1);
         // move everything unarchived
