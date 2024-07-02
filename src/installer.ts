@@ -77,7 +77,7 @@ export async function install(
       )
       core.debug(`Upload result: ${uploadResult}`)
     }
-    await io.rmRF(executablePath)
+    // await io.rmRF(executablePath)
   }
 }
 
@@ -134,7 +134,7 @@ export async function installCudnn(
     throw error
   }
 
-  await io.rmRF(cudnnArchivePath)
+  // await io.rmRF(cudnnArchivePath)
 
   let filename: string = directoryName
   filename = filename.substring(0, filename.lastIndexOf(fileExt) - 1)
