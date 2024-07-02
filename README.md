@@ -8,43 +8,13 @@ This action installs the [NVIDIA® CUDA® Toolkit](https://developer.nvidia.com/
 
 **Optional** The CUDA version to install. View `src/link/windows-links.ts` and `src/link/linux-links.ts` for available versions.
 
-Default: `'12.4.0'`.
+Default: `'12.5.0'`.
 
-### `cudnn`, `cudnn_url` and `cudnn_archive_dir`
+### `cudnn`
 
-**Optional** The cudnn version, the URL to the cudnn archive file (.zip file for Windows and .tar.xz file for Linux) and the name of the unarchived directory.
+**Optional** The cudnn version. cudnn archive file is downloaded from the official [NVIDIA cuDNN Archive](https://developer.download.nvidia.com/compute/cudnn/redist/cudnn) and extracted to the CUDA install location. The extracted files are added to `GITHUB_PATH` so you can use cudnn in subsequent steps.
 
-A user provided URL is needed as the official cudnn archive would require a valid login to download. Therefore, we need to follow these steps:
-
-1. Download the offical archive file from NVIDIA, [cudnn-download](https://developer.nvidia.com/rdp/cudnn-download).
-2. Serve the archive file where (only) you can access.
-3. Set `cudnn`, `cudnn_url` and `cudnn_archive_dir`.
-
-For example, to use cudnn 8.7.0 on Windows, you'll need to download https://developer.nvidia.com/downloads/c118-cudnn-windows-8664-87084cuda11-archivezip from NVIDIA website. Note that this requires you to have an NVIDIA developer account.
-
-Since we are using cudnn 8.7.0, we need to set `cudnn` to `"8.7.0"`.
-
-Once you suceesfully downloaded the file, and if you unarchive that file, there will be a directory with the same name as the zip file (excluding the `.zip` file extension):
-
-```
-.
-├── cudnn-windows-x86_64-8.7.0.84_cuda11-archive.zip
-└── cudnn-windows-x86_64-8.7.0.84_cuda11-archive
-    ├── LICENSE
-    ├── bin
-    │   └── *.dll
-    ├── include
-    │   └── *.h
-    └── lib
-        └── x64
-            └── *.lib
-```
-
-The dir name, `cudnn-windows-x86_64-8.7.0.84_cuda11-archive`, should be the value of `cudnn_archive_dir`. Note that we only need to serve the `.zip` file; the unarchiving operation here is to show the expected structure and the name of the unarchived directory.
-
-Lastly, once you uploaded this `.zip` file to your server, and let' suppose it can be accessed at `https://example.com/cudnn-windows-x86_64-8.7.0.84_cuda11-archive.zip`, then `cudnn_url` should be set to `"https://example.com/cudnn-windows-x86_64-8.7.0.84_cuda11-archive.zip"`.
-
-Of course, you can store the URL as a secret in GitHub Actions, and use the corresponding secret in your workflow file.
+Default: `''`.
 
 ### `sub-packages`
 

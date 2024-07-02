@@ -6,7 +6,7 @@ import * as io from '@actions/io'
 import {OSType, getOs, getRelease, CUDAToolkit, DownloadType} from './platform'
 import {AbstractLinks} from './links/links'
 import {Method} from './method'
-import {WindowsLinks} from './links/windows-links'
+import {WindowsLinks} from './links/windows-x86_64-links'
 import fs from 'fs'
 import {getLinks} from './links/get-links'
 
@@ -14,6 +14,7 @@ import {getLinks} from './links/get-links'
 export async function download(
   toolkit: CUDAToolkit,
   method: Method,
+  arch: string,
   useGitHubCache: boolean
 ): Promise<[string, string | undefined]> {
   // First try to find tool with desired version in tool cache (local to machine)
@@ -42,6 +43,7 @@ export async function download(
       cacheKey,
       useGitHubCache,
       osType,
+      arch,
       toolId,
       DownloadType.cuda
     )
@@ -62,6 +64,7 @@ export async function download(
         cudnnCacheKey,
         useGitHubCache,
         osType,
+        arch,
         cudnnToolId,
         DownloadType.cudnn
       )
@@ -136,6 +139,7 @@ async function fromCacheOrDownload(
   cacheKey: string,
   useGitHubCache: boolean,
   osType: OSType,
+  arch: string,
   toolId: string,
   downloadType: DownloadType
 ): Promise<string> {
@@ -155,7 +159,7 @@ async function fromCacheOrDownload(
     // Final option, download tool from NVIDIA servers
     core.debug(`Not found in local/GitHub cache, downloading...`)
     // Get download URL
-    toolkit = await getDownloadURL(method, toolkit)
+    toolkit = await getDownloadURL(method, arch, toolkit)
 
     // Get CUDA/cudnn installer filename extension depending on OS
     const fileExtension: string = getFileExtension(osType, downloadType)
@@ -208,9 +212,10 @@ async function fromCacheOrDownload(
 
 async function getDownloadURL(
   method: string,
+  arch: string,
   toolkit: CUDAToolkit
 ): Promise<CUDAToolkit> {
-  const links: AbstractLinks = await getLinks()
+  const links: AbstractLinks = await getLinks(arch)
   switch (method) {
     case 'local':
       toolkit.cuda_url = links.getLocalURLFromCudaVersion(toolkit.cuda_version)

@@ -89,6 +89,8 @@ jobs:
           tail -n "+${LINE}" src/links/windows-links.ts >> new-windows-links.ts
           mv new-windows-links.ts src/links/windows-links.ts
 
+          python3 update-cudnn.py
+
           npm run build && npm run format && npm run lint && npm run package
 
           git config user.name github-actions

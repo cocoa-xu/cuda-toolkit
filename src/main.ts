@@ -7,6 +7,7 @@ import {getVersion} from './version'
 import {install, installCudnn} from './installer'
 import {updatePath} from './update-path'
 import path from 'path'
+import os from 'os'
 
 async function run(): Promise<void> {
   try {
@@ -14,8 +15,11 @@ async function run(): Promise<void> {
     core.debug(`Desired cuda version: ${cuda}`)
     const cudnn: string = core.getInput('cudnn')
     core.debug(`Desired cudnn version: ${cudnn}`)
-    const cudnn_url: string = core.getInput('cudnn_url')
-    core.debug(`Desired cuDNN: ${cudnn_url}`)
+    let arch: string = core.getInput('arch')
+    if (arch === '') {
+      arch = os.arch()
+    }
+    core.debug(`Desired arch: ${arch}`)
     const cudnn_archive_dir: string = core.getInput('cudnn_archive_dir')
     core.debug(`Desired cuDNN archive dir: ${cudnn_archive_dir}`)
     const subPackages: string = core.getInput('sub-packages')
@@ -43,7 +47,7 @@ async function run(): Promise<void> {
     core.debug(`Parsed method: ${methodParsed}`)
 
     // Parse version string
-    const cuda_toolkit = await getVersion(cuda, cudnn, cudnn_url, methodParsed)
+    const cuda_toolkit = await getVersion(cuda, cudnn, arch, methodParsed)
 
     // Parse linuxLocalArgs array
     let linuxLocalArgsArray: string[] = []
@@ -82,7 +86,7 @@ async function run(): Promise<void> {
     } else {
       // Download
       const [executablePath, archivePath]: [string, string | undefined] =
-        await download(cuda_toolkit, methodParsed, useGitHubCache)
+        await download(cuda_toolkit, methodParsed, arch, useGitHubCache)
 
       // Install CUDA
       await install(

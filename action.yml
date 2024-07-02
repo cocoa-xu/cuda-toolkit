@@ -5,13 +5,13 @@ inputs:
   cuda:
     description: 'CUDA version'
     required: false
-    default: '12.4.0'
+    default: '12.5.0'
   cudnn:
     description: 'cuDNN version'
     required: false
     default: ''
-  cudnn_url:
-    description: 'cuDNN Archive URL'
+  arch:
+    description: 'Platform arch'
     required: false
     default: ''
   cudnn_archive_dir:

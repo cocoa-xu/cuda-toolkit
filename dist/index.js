@@ -153,11 +153,11 @@ const glob = __importStar(__nccwpck_require__(8090));
 const tc = __importStar(__nccwpck_require__(7784));
 const io = __importStar(__nccwpck_require__(7436));
 const platform_1 = __nccwpck_require__(9238);
-const windows_links_1 = __nccwpck_require__(8121);
+const windows_x86_64_links_1 = __nccwpck_require__(4892);
 const fs_1 = __importDefault(__nccwpck_require__(7147));
 const get_links_1 = __nccwpck_require__(1451);
 // Download helper which returns the installer executable and caches it for next runs
-function download(toolkit, method, useGitHubCache) {
+function download(toolkit, method, arch, useGitHubCache) {
     return __awaiter(this, void 0, void 0, function* () {
         // First try to find tool with desired version in tool cache (local to machine)
         const toolName = 'cuda_installer';
@@ -178,7 +178,7 @@ function download(toolkit, method, useGitHubCache) {
         else {
             // Second option, get tool from GitHub cache if enabled
             const cacheKey = `${toolId}-${toolkit.cuda_version}`;
-            executablePath = yield fromCacheOrDownload(toolName, toolkit, method, cacheKey, useGitHubCache, osType, toolId, platform_1.DownloadType.cuda);
+            executablePath = yield fromCacheOrDownload(toolName, toolkit, method, cacheKey, useGitHubCache, osType, arch, toolId, platform_1.DownloadType.cuda);
         }
         if (toolkit.cudnn_version !== undefined) {
             const cudnnPath = tc.find(cudnnToolId, `${toolkit.cudnn_version}`);
@@ -189,7 +189,7 @@ function download(toolkit, method, useGitHubCache) {
             }
             else {
                 const cudnnCacheKey = `${cudnnToolId}-${toolkit.cudnn_version}`;
-                cudnnArchivePath = yield fromCacheOrDownload(cudnnToolName, toolkit, method, cudnnCacheKey, useGitHubCache, osType, cudnnToolId, platform_1.DownloadType.cudnn);
+                cudnnArchivePath = yield fromCacheOrDownload(cudnnToolName, toolkit, method, cudnnCacheKey, useGitHubCache, osType, arch, cudnnToolId, platform_1.DownloadType.cudnn);
             }
         }
         // String with full executable path
@@ -249,7 +249,7 @@ function verifyCachePath(verifyPath, chmod) {
         return fullExecutablePath;
     });
 }
-function fromCacheOrDownload(toolName, toolkit, method, cacheKey, useGitHubCache, osType, toolId, downloadType) {
+function fromCacheOrDownload(toolName, toolkit, method, cacheKey, useGitHubCache, osType, arch, toolId, downloadType) {
     return __awaiter(this, void 0, void 0, function* () {
         const cachePath = cacheKey;
         let cacheResult;
@@ -265,7 +265,7 @@ function fromCacheOrDownload(toolName, toolkit, method, cacheKey, useGitHubCache
             // Final option, download tool from NVIDIA servers
             core.debug(`Not found in local/GitHub cache, downloading...`);
             // Get download URL
-            toolkit = yield getDownloadURL(method, toolkit);
+            toolkit = yield getDownloadURL(method, arch, toolkit);
             // Get CUDA/cudnn installer filename extension depending on OS
             const fileExtension = getFileExtension(osType, downloadType);
             const version_string = downloadType === platform_1.DownloadType.cuda
@@ -300,15 +300,15 @@ function fromCacheOrDownload(toolName, toolkit, method, cacheKey, useGitHubCache
         }
     });
 }
-function getDownloadURL(method, toolkit) {
+function getDownloadURL(method, arch, toolkit) {
     return __awaiter(this, void 0, void 0, function* () {
-        const links = yield (0, get_links_1.getLinks)();
+        const links = yield (0, get_links_1.getLinks)(arch);
         switch (method) {
             case 'local':
                 toolkit.cuda_url = links.getLocalURLFromCudaVersion(toolkit.cuda_version);
                 return toolkit;
             case 'network':
-                if (!(links instanceof windows_links_1.WindowsLinks)) {
+                if (!(links instanceof windows_x86_64_links_1.WindowsLinks)) {
                     core.debug(`Tried to get windows links but got linux links instance`);
                     throw new Error(`Network mode is not supported by linux, shouldn't even get here`);
                 }
@@ -559,20 +559,41 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getLinks = void 0;
 const platform_1 = __nccwpck_require__(9238);
-const linux_links_1 = __nccwpck_require__(8377);
-const windows_links_1 = __nccwpck_require__(8121);
+const linux_x86_64_links_1 = __nccwpck_require__(9305);
+const linux_aarch64_links_1 = __nccwpck_require__(7181);
+const linux_ppc64le_links_1 = __nccwpck_require__(7498);
+const linux_sbsa_links_1 = __nccwpck_require__(798);
+const windows_x86_64_links_1 = __nccwpck_require__(4892);
+const os_1 = __importDefault(__nccwpck_require__(2037));
 // Platform independent getter for ILinks interface
-function getLinks() {
+function getLinks(arch) {
     return __awaiter(this, void 0, void 0, function* () {
         const osType = yield (0, platform_1.getOs)();
+        if (arch.length === 0)
+            arch = os_1.default.arch();
         switch (osType) {
             case platform_1.OSType.windows:
-                return windows_links_1.WindowsLinks.Instance;
+                if (arch === 'x64')
+                    return windows_x86_64_links_1.WindowsLinks.Instance;
+                else
+                    throw new Error(`Unsupported architecture: ${arch}`);
             case platform_1.OSType.linux:
-                return linux_links_1.LinuxLinks.Instance;
+                if (arch === 'x64')
+                    return linux_x86_64_links_1.LinuxX8664Links.Instance;
+                else if (arch === 'arm64')
+                    return linux_aarch64_links_1.LinuxAArch64Links.Instance;
+                else if (arch === 'ppc64le')
+                    return linux_ppc64le_links_1.LinuxPPC64leLinks.Instance;
+                else if (arch === 'sbsa')
+                    return linux_sbsa_links_1.LinuxSBSALinks.Instance;
+                else
+                    throw new Error(`Unsupported architecture: ${arch}`);
         }
     });
 }
@@ -592,10 +613,16 @@ const semver_1 = __nccwpck_require__(1383);
 // Interface for getting cuda versions and corresponding download URLs
 class AbstractLinks {
     constructor() {
+        // key: cuda version, value: cuda URL
         this.cudaVersionToURL = new Map();
+        // key: cuda version, value: [key: cuda major version, value: cudnn URL]
+        this.cudnnVersionToURL = new Map();
     }
     getAvailableLocalCudaVersions() {
         return Array.from(this.cudaVersionToURL.keys()).map(s => new semver_1.SemVer(s));
+    }
+    getAvailableCudnnVersions() {
+        return Array.from(this.cudnnVersionToURL.keys()).map(s => new semver_1.SemVer(s));
     }
     getLocalURLFromCudaVersion(version) {
         const urlString = this.cudaVersionToURL.get(`${version}`);
@@ -610,18 +637,18 @@ exports.AbstractLinks = AbstractLinks;
 
 /***/ }),
 
-/***/ 8377:
+/***/ 7181:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.LinuxLinks = void 0;
+exports.LinuxAArch64Links = void 0;
 const links_1 = __nccwpck_require__(2642);
 /**
- * Singleton class for windows links.
+ * Singleton class for aarch64 Linux links.
  */
-class LinuxLinks extends links_1.AbstractLinks {
+class LinuxAArch64Links extends links_1.AbstractLinks {
     // Private constructor to prevent instantiation
     constructor() {
         super();
@@ -776,39 +803,1217 @@ class LinuxLinks extends links_1.AbstractLinks {
                 'https://developer.nvidia.com/compute/cuda/8.0/Prod2/local_installers/cuda_8.0.61_375.26_linux-run'
             ]
         ]);
+        this.cudnnVersionToURL = new Map([
+            [
+                '8.9.0',
+                new Map([
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-aarch64/cudnn-linux-aarch64-8.9.0.131_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.9.5',
+                new Map([
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-aarch64/cudnn-linux-aarch64-8.9.5.30_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '9.0.0',
+                new Map([
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-aarch64/cudnn-linux-aarch64-9.0.0.312_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '9.1.0',
+                new Map([
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-aarch64/cudnn-linux-aarch64-9.1.0.70_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '9.1.1',
+                new Map([
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-aarch64/cudnn-linux-aarch64-9.1.1.17_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '9.2.0',
+                new Map([
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-aarch64/cudnn-linux-aarch64-9.2.0.82_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ]
+        ]);
     }
     static get Instance() {
         return this._instance || (this._instance = new this());
     }
 }
-exports.LinuxLinks = LinuxLinks;
+exports.LinuxAArch64Links = LinuxAArch64Links;
 
 
 /***/ }),
 
-/***/ 8121:
+/***/ 7498:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.LinuxPPC64leLinks = void 0;
+const links_1 = __nccwpck_require__(2642);
+/**
+ * Singleton class for ppc64le Linux links.
+ */
+class LinuxPPC64leLinks extends links_1.AbstractLinks {
+    // Private constructor to prevent instantiation
+    constructor() {
+        super();
+        // Map of cuda SemVer version to download URL
+        this.cudaVersionToURL = new Map([
+            [
+                '12.5.0',
+                'https://developer.download.nvidia.com/compute/cuda/12.5.0/local_installers/cuda_12.5.0_555.42.02_linux.run'
+            ],
+            [
+                '12.4.1',
+                'https://developer.download.nvidia.com/compute/cuda/12.4.1/local_installers/cuda_12.4.1_550.54.15_linux.run'
+            ],
+            [
+                '12.4.0',
+                'https://developer.download.nvidia.com/compute/cuda/12.4.0/local_installers/cuda_12.4.0_550.54.14_linux.run'
+            ],
+            [
+                '12.3.2',
+                'https://developer.download.nvidia.com/compute/cuda/12.3.2/local_installers/cuda_12.3.2_545.23.08_linux.run'
+            ],
+            [
+                '12.3.1',
+                'https://developer.download.nvidia.com/compute/cuda/12.3.1/local_installers/cuda_12.3.1_545.23.08_linux.run'
+            ],
+            [
+                '12.3.0',
+                'https://developer.download.nvidia.com/compute/cuda/12.3.0/local_installers/cuda_12.3.0_545.23.06_linux.run'
+            ],
+            [
+                '12.2.2',
+                'https://developer.download.nvidia.com/compute/cuda/12.2.2/local_installers/cuda_12.2.2_535.104.05_linux.run'
+            ],
+            [
+                '12.2.1',
+                'https://developer.download.nvidia.com/compute/cuda/12.2.1/local_installers/cuda_12.2.1_535.86.10_linux.run'
+            ],
+            [
+                '12.2.0',
+                'https://developer.download.nvidia.com/compute/cuda/12.2.0/local_installers/cuda_12.2.0_535.54.03_linux.run'
+            ],
+            [
+                '12.1.1',
+                'https://developer.download.nvidia.com/compute/cuda/12.1.1/local_installers/cuda_12.1.1_530.30.02_linux.run'
+            ],
+            [
+                '12.1.0',
+                'https://developer.download.nvidia.com/compute/cuda/12.1.0/local_installers/cuda_12.1.0_530.30.02_linux.run'
+            ],
+            [
+                '12.0.1',
+                'https://developer.download.nvidia.com/compute/cuda/12.0.1/local_installers/cuda_12.0.1_525.85.12_linux.run'
+            ],
+            [
+                '12.0.0',
+                'https://developer.download.nvidia.com/compute/cuda/12.0.0/local_installers/cuda_12.0.0_525.60.13_linux.run'
+            ],
+            [
+                '11.8.0',
+                'https://developer.download.nvidia.com/compute/cuda/11.8.0/local_installers/cuda_11.8.0_520.61.05_linux.run'
+            ],
+            [
+                '11.7.0',
+                'https://developer.download.nvidia.com/compute/cuda/11.7.0/local_installers/cuda_11.7.0_515.43.04_linux.run'
+            ],
+            [
+                '11.6.2',
+                'https://developer.download.nvidia.com/compute/cuda/11.6.2/local_installers/cuda_11.6.2_510.47.03_linux.run'
+            ],
+            [
+                '11.6.1',
+                'https://developer.download.nvidia.com/compute/cuda/11.6.1/local_installers/cuda_11.6.1_510.47.03_linux.run'
+            ],
+            [
+                '11.6.0',
+                'https://developer.download.nvidia.com/compute/cuda/11.6.0/local_installers/cuda_11.6.0_510.39.01_linux.run'
+            ],
+            [
+                '11.5.2',
+                'https://developer.download.nvidia.com/compute/cuda/11.5.2/local_installers/cuda_11.5.2_495.29.05_linux.run'
+            ],
+            [
+                '11.5.1',
+                'https://developer.download.nvidia.com/compute/cuda/11.5.1/local_installers/cuda_11.5.1_495.29.05_linux.run'
+            ],
+            [
+                '11.5.0',
+                'https://developer.download.nvidia.com/compute/cuda/11.5.0/local_installers/cuda_11.5.0_495.29.05_linux.run'
+            ],
+            [
+                '11.4.3',
+                'https://developer.download.nvidia.com/compute/cuda/11.4.3/local_installers/cuda_11.4.3_470.82.01_linux.run'
+            ],
+            [
+                '11.4.2',
+                'https://developer.download.nvidia.com/compute/cuda/11.4.2/local_installers/cuda_11.4.2_470.57.02_linux.run'
+            ],
+            [
+                '11.4.1',
+                'https://developer.download.nvidia.com/compute/cuda/11.4.1/local_installers/cuda_11.4.1_470.57.02_linux.run'
+            ],
+            [
+                '11.4.0',
+                'https://developer.download.nvidia.com/compute/cuda/11.4.0/local_installers/cuda_11.4.0_470.42.01_linux.run'
+            ],
+            [
+                '11.3.1',
+                'https://developer.download.nvidia.com/compute/cuda/11.3.1/local_installers/cuda_11.3.1_465.19.01_linux.run'
+            ],
+            [
+                '11.3.0',
+                'https://developer.download.nvidia.com/compute/cuda/11.3.0/local_installers/cuda_11.3.0_465.19.01_linux.run'
+            ],
+            [
+                '11.2.2',
+                'https://developer.download.nvidia.com/compute/cuda/11.2.2/local_installers/cuda_11.2.2_460.32.03_linux.run'
+            ],
+            [
+                '11.2.1',
+                'https://developer.download.nvidia.com/compute/cuda/11.2.1/local_installers/cuda_11.2.1_460.32.03_linux.run'
+            ],
+            [
+                '11.2.0',
+                'https://developer.download.nvidia.com/compute/cuda/11.2.0/local_installers/cuda_11.2.0_460.27.04_linux.run'
+            ],
+            [
+                '11.1.1',
+                'https://developer.download.nvidia.com/compute/cuda/11.1.1/local_installers/cuda_11.1.1_455.32.00_linux.run'
+            ],
+            [
+                '11.0.3',
+                'https://developer.download.nvidia.com/compute/cuda/11.0.3/local_installers/cuda_11.0.3_450.51.06_linux.run'
+            ],
+            [
+                '10.2.89',
+                'https://developer.download.nvidia.com/compute/cuda/10.2/Prod/local_installers/cuda_10.2.89_440.33.01_linux.run'
+            ],
+            [
+                '10.1.243',
+                'https://developer.download.nvidia.com/compute/cuda/10.1/Prod/local_installers/cuda_10.1.243_418.87.00_linux.run'
+            ],
+            [
+                '10.0.130',
+                'https://developer.nvidia.com/compute/cuda/10.0/Prod/local_installers/cuda_10.0.130_410.48_linux'
+            ],
+            [
+                '9.2.148',
+                'https://developer.nvidia.com/compute/cuda/9.2/Prod2/local_installers/cuda_9.2.148_396.37_linux'
+            ],
+            [
+                '8.0.61',
+                'https://developer.nvidia.com/compute/cuda/8.0/Prod2/local_installers/cuda_8.0.61_375.26_linux-run'
+            ]
+        ]);
+        this.cudnnVersionToURL = new Map([
+            [
+                '8.5.0',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-ppc64le/cudnn-linux-ppc64le-8.5.0.96_cuda11-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.6.0',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-ppc64le/cudnn-linux-ppc64le-8.6.0.163_cuda11-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.7.0',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-ppc64le/cudnn-linux-ppc64le-8.7.0.84_cuda11-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.8.0',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-ppc64le/cudnn-linux-ppc64le-8.8.0.121_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-ppc64le/cudnn-linux-ppc64le-8.8.0.121_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.8.1',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-ppc64le/cudnn-linux-ppc64le-8.8.1.3_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-ppc64le/cudnn-linux-ppc64le-8.8.1.3_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.9.0',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-ppc64le/cudnn-linux-ppc64le-8.9.0.131_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-ppc64le/cudnn-linux-ppc64le-8.9.0.131_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.9.1',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-ppc64le/cudnn-linux-ppc64le-8.9.1.23_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-ppc64le/cudnn-linux-ppc64le-8.9.1.23_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.9.2',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-ppc64le/cudnn-linux-ppc64le-8.9.2.26_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-ppc64le/cudnn-linux-ppc64le-8.9.2.26_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.9.3',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-ppc64le/cudnn-linux-ppc64le-8.9.3.28_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-ppc64le/cudnn-linux-ppc64le-8.9.3.28_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.9.4',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-ppc64le/cudnn-linux-ppc64le-8.9.4.25_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-ppc64le/cudnn-linux-ppc64le-8.9.4.25_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.9.5',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-ppc64le/cudnn-linux-ppc64le-8.9.5.30_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-ppc64le/cudnn-linux-ppc64le-8.9.5.30_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.9.6',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-ppc64le/cudnn-linux-ppc64le-8.9.6.50_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-ppc64le/cudnn-linux-ppc64le-8.9.6.50_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.9.7',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-ppc64le/cudnn-linux-ppc64le-8.9.7.29_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-ppc64le/cudnn-linux-ppc64le-8.9.7.29_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '9.0.0',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-ppc64le/cudnn-linux-ppc64le-9.0.0.312_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-ppc64le/cudnn-linux-ppc64le-9.0.0.312_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ]
+        ]);
+    }
+    static get Instance() {
+        return this._instance || (this._instance = new this());
+    }
+}
+exports.LinuxPPC64leLinks = LinuxPPC64leLinks;
+
+
+/***/ }),
+
+/***/ 798:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.LinuxSBSALinks = void 0;
+const links_1 = __nccwpck_require__(2642);
+/**
+ * Singleton class for sbsa Linux links.
+ */
+class LinuxSBSALinks extends links_1.AbstractLinks {
+    // Private constructor to prevent instantiation
+    constructor() {
+        super();
+        // Map of cuda SemVer version to download URL
+        this.cudaVersionToURL = new Map([
+            [
+                '12.5.0',
+                'https://developer.download.nvidia.com/compute/cuda/12.5.0/local_installers/cuda_12.5.0_555.42.02_linux.run'
+            ],
+            [
+                '12.4.1',
+                'https://developer.download.nvidia.com/compute/cuda/12.4.1/local_installers/cuda_12.4.1_550.54.15_linux.run'
+            ],
+            [
+                '12.4.0',
+                'https://developer.download.nvidia.com/compute/cuda/12.4.0/local_installers/cuda_12.4.0_550.54.14_linux.run'
+            ],
+            [
+                '12.3.2',
+                'https://developer.download.nvidia.com/compute/cuda/12.3.2/local_installers/cuda_12.3.2_545.23.08_linux.run'
+            ],
+            [
+                '12.3.1',
+                'https://developer.download.nvidia.com/compute/cuda/12.3.1/local_installers/cuda_12.3.1_545.23.08_linux.run'
+            ],
+            [
+                '12.3.0',
+                'https://developer.download.nvidia.com/compute/cuda/12.3.0/local_installers/cuda_12.3.0_545.23.06_linux.run'
+            ],
+            [
+                '12.2.2',
+                'https://developer.download.nvidia.com/compute/cuda/12.2.2/local_installers/cuda_12.2.2_535.104.05_linux.run'
+            ],
+            [
+                '12.2.1',
+                'https://developer.download.nvidia.com/compute/cuda/12.2.1/local_installers/cuda_12.2.1_535.86.10_linux.run'
+            ],
+            [
+                '12.2.0',
+                'https://developer.download.nvidia.com/compute/cuda/12.2.0/local_installers/cuda_12.2.0_535.54.03_linux.run'
+            ],
+            [
+                '12.1.1',
+                'https://developer.download.nvidia.com/compute/cuda/12.1.1/local_installers/cuda_12.1.1_530.30.02_linux.run'
+            ],
+            [
+                '12.1.0',
+                'https://developer.download.nvidia.com/compute/cuda/12.1.0/local_installers/cuda_12.1.0_530.30.02_linux.run'
+            ],
+            [
+                '12.0.1',
+                'https://developer.download.nvidia.com/compute/cuda/12.0.1/local_installers/cuda_12.0.1_525.85.12_linux.run'
+            ],
+            [
+                '12.0.0',
+                'https://developer.download.nvidia.com/compute/cuda/12.0.0/local_installers/cuda_12.0.0_525.60.13_linux.run'
+            ],
+            [
+                '11.8.0',
+                'https://developer.download.nvidia.com/compute/cuda/11.8.0/local_installers/cuda_11.8.0_520.61.05_linux.run'
+            ],
+            [
+                '11.7.0',
+                'https://developer.download.nvidia.com/compute/cuda/11.7.0/local_installers/cuda_11.7.0_515.43.04_linux.run'
+            ],
+            [
+                '11.6.2',
+                'https://developer.download.nvidia.com/compute/cuda/11.6.2/local_installers/cuda_11.6.2_510.47.03_linux.run'
+            ],
+            [
+                '11.6.1',
+                'https://developer.download.nvidia.com/compute/cuda/11.6.1/local_installers/cuda_11.6.1_510.47.03_linux.run'
+            ],
+            [
+                '11.6.0',
+                'https://developer.download.nvidia.com/compute/cuda/11.6.0/local_installers/cuda_11.6.0_510.39.01_linux.run'
+            ],
+            [
+                '11.5.2',
+                'https://developer.download.nvidia.com/compute/cuda/11.5.2/local_installers/cuda_11.5.2_495.29.05_linux.run'
+            ],
+            [
+                '11.5.1',
+                'https://developer.download.nvidia.com/compute/cuda/11.5.1/local_installers/cuda_11.5.1_495.29.05_linux.run'
+            ],
+            [
+                '11.5.0',
+                'https://developer.download.nvidia.com/compute/cuda/11.5.0/local_installers/cuda_11.5.0_495.29.05_linux.run'
+            ],
+            [
+                '11.4.3',
+                'https://developer.download.nvidia.com/compute/cuda/11.4.3/local_installers/cuda_11.4.3_470.82.01_linux.run'
+            ],
+            [
+                '11.4.2',
+                'https://developer.download.nvidia.com/compute/cuda/11.4.2/local_installers/cuda_11.4.2_470.57.02_linux.run'
+            ],
+            [
+                '11.4.1',
+                'https://developer.download.nvidia.com/compute/cuda/11.4.1/local_installers/cuda_11.4.1_470.57.02_linux.run'
+            ],
+            [
+                '11.4.0',
+                'https://developer.download.nvidia.com/compute/cuda/11.4.0/local_installers/cuda_11.4.0_470.42.01_linux.run'
+            ],
+            [
+                '11.3.1',
+                'https://developer.download.nvidia.com/compute/cuda/11.3.1/local_installers/cuda_11.3.1_465.19.01_linux.run'
+            ],
+            [
+                '11.3.0',
+                'https://developer.download.nvidia.com/compute/cuda/11.3.0/local_installers/cuda_11.3.0_465.19.01_linux.run'
+            ],
+            [
+                '11.2.2',
+                'https://developer.download.nvidia.com/compute/cuda/11.2.2/local_installers/cuda_11.2.2_460.32.03_linux.run'
+            ],
+            [
+                '11.2.1',
+                'https://developer.download.nvidia.com/compute/cuda/11.2.1/local_installers/cuda_11.2.1_460.32.03_linux.run'
+            ],
+            [
+                '11.2.0',
+                'https://developer.download.nvidia.com/compute/cuda/11.2.0/local_installers/cuda_11.2.0_460.27.04_linux.run'
+            ],
+            [
+                '11.1.1',
+                'https://developer.download.nvidia.com/compute/cuda/11.1.1/local_installers/cuda_11.1.1_455.32.00_linux.run'
+            ],
+            [
+                '11.0.3',
+                'https://developer.download.nvidia.com/compute/cuda/11.0.3/local_installers/cuda_11.0.3_450.51.06_linux.run'
+            ],
+            [
+                '10.2.89',
+                'https://developer.download.nvidia.com/compute/cuda/10.2/Prod/local_installers/cuda_10.2.89_440.33.01_linux.run'
+            ],
+            [
+                '10.1.243',
+                'https://developer.download.nvidia.com/compute/cuda/10.1/Prod/local_installers/cuda_10.1.243_418.87.00_linux.run'
+            ],
+            [
+                '10.0.130',
+                'https://developer.nvidia.com/compute/cuda/10.0/Prod/local_installers/cuda_10.0.130_410.48_linux'
+            ],
+            [
+                '9.2.148',
+                'https://developer.nvidia.com/compute/cuda/9.2/Prod2/local_installers/cuda_9.2.148_396.37_linux'
+            ],
+            [
+                '8.0.61',
+                'https://developer.nvidia.com/compute/cuda/8.0/Prod2/local_installers/cuda_8.0.61_375.26_linux-run'
+            ]
+        ]);
+        this.cudnnVersionToURL = new Map([
+            [
+                '8.5.0',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-sbsa/cudnn-linux-sbsa-8.5.0.96_cuda11-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.6.0',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-sbsa/cudnn-linux-sbsa-8.6.0.163_cuda11-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.7.0',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-sbsa/cudnn-linux-sbsa-8.7.0.84_cuda11-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.8.0',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-sbsa/cudnn-linux-sbsa-8.8.0.121_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-sbsa/cudnn-linux-sbsa-8.8.0.121_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.8.1',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-sbsa/cudnn-linux-sbsa-8.8.1.3_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-sbsa/cudnn-linux-sbsa-8.8.1.3_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.9.0',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-sbsa/cudnn-linux-sbsa-8.9.0.131_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-sbsa/cudnn-linux-sbsa-8.9.0.131_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.9.1',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-sbsa/cudnn-linux-sbsa-8.9.1.23_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-sbsa/cudnn-linux-sbsa-8.9.1.23_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.9.2',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-sbsa/cudnn-linux-sbsa-8.9.2.26_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-sbsa/cudnn-linux-sbsa-8.9.2.26_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.9.3',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-sbsa/cudnn-linux-sbsa-8.9.3.28_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-sbsa/cudnn-linux-sbsa-8.9.3.28_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.9.4',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-sbsa/cudnn-linux-sbsa-8.9.4.25_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-sbsa/cudnn-linux-sbsa-8.9.4.25_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.9.5',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-sbsa/cudnn-linux-sbsa-8.9.5.30_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-sbsa/cudnn-linux-sbsa-8.9.5.30_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.9.6',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-sbsa/cudnn-linux-sbsa-8.9.6.50_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-sbsa/cudnn-linux-sbsa-8.9.6.50_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.9.7',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-sbsa/cudnn-linux-sbsa-8.9.7.29_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-sbsa/cudnn-linux-sbsa-8.9.7.29_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '9.0.0',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-sbsa/cudnn-linux-sbsa-9.0.0.312_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-sbsa/cudnn-linux-sbsa-9.0.0.312_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '9.1.0',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-sbsa/cudnn-linux-sbsa-9.1.0.70_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-sbsa/cudnn-linux-sbsa-9.1.0.70_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '9.1.1',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-sbsa/cudnn-linux-sbsa-9.1.1.17_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-sbsa/cudnn-linux-sbsa-9.1.1.17_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '9.2.0',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-sbsa/cudnn-linux-sbsa-9.2.0.82_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-sbsa/cudnn-linux-sbsa-9.2.0.82_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ]
+        ]);
+    }
+    static get Instance() {
+        return this._instance || (this._instance = new this());
+    }
+}
+exports.LinuxSBSALinks = LinuxSBSALinks;
+
+
+/***/ }),
+
+/***/ 9305:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.LinuxX8664Links = void 0;
+/* eslint-disable filenames/match-regex */
+const links_1 = __nccwpck_require__(2642);
+/**
+ * Singleton class for windows links.
+ */
+class LinuxX8664Links extends links_1.AbstractLinks {
+    // Private constructor to prevent instantiation
+    constructor() {
+        super();
+        // Map of cuda SemVer version to download URL
+        this.cudaVersionToURL = new Map([
+            [
+                '12.5.0',
+                'https://developer.download.nvidia.com/compute/cuda/12.5.0/local_installers/cuda_12.5.0_555.42.02_linux.run'
+            ],
+            [
+                '12.4.1',
+                'https://developer.download.nvidia.com/compute/cuda/12.4.1/local_installers/cuda_12.4.1_550.54.15_linux.run'
+            ],
+            [
+                '12.4.0',
+                'https://developer.download.nvidia.com/compute/cuda/12.4.0/local_installers/cuda_12.4.0_550.54.14_linux.run'
+            ],
+            [
+                '12.3.2',
+                'https://developer.download.nvidia.com/compute/cuda/12.3.2/local_installers/cuda_12.3.2_545.23.08_linux.run'
+            ],
+            [
+                '12.3.1',
+                'https://developer.download.nvidia.com/compute/cuda/12.3.1/local_installers/cuda_12.3.1_545.23.08_linux.run'
+            ],
+            [
+                '12.3.0',
+                'https://developer.download.nvidia.com/compute/cuda/12.3.0/local_installers/cuda_12.3.0_545.23.06_linux.run'
+            ],
+            [
+                '12.2.2',
+                'https://developer.download.nvidia.com/compute/cuda/12.2.2/local_installers/cuda_12.2.2_535.104.05_linux.run'
+            ],
+            [
+                '12.2.1',
+                'https://developer.download.nvidia.com/compute/cuda/12.2.1/local_installers/cuda_12.2.1_535.86.10_linux.run'
+            ],
+            [
+                '12.2.0',
+                'https://developer.download.nvidia.com/compute/cuda/12.2.0/local_installers/cuda_12.2.0_535.54.03_linux.run'
+            ],
+            [
+                '12.1.1',
+                'https://developer.download.nvidia.com/compute/cuda/12.1.1/local_installers/cuda_12.1.1_530.30.02_linux.run'
+            ],
+            [
+                '12.1.0',
+                'https://developer.download.nvidia.com/compute/cuda/12.1.0/local_installers/cuda_12.1.0_530.30.02_linux.run'
+            ],
+            [
+                '12.0.1',
+                'https://developer.download.nvidia.com/compute/cuda/12.0.1/local_installers/cuda_12.0.1_525.85.12_linux.run'
+            ],
+            [
+                '12.0.0',
+                'https://developer.download.nvidia.com/compute/cuda/12.0.0/local_installers/cuda_12.0.0_525.60.13_linux.run'
+            ],
+            [
+                '11.8.0',
+                'https://developer.download.nvidia.com/compute/cuda/11.8.0/local_installers/cuda_11.8.0_520.61.05_linux.run'
+            ],
+            [
+                '11.7.0',
+                'https://developer.download.nvidia.com/compute/cuda/11.7.0/local_installers/cuda_11.7.0_515.43.04_linux.run'
+            ],
+            [
+                '11.6.2',
+                'https://developer.download.nvidia.com/compute/cuda/11.6.2/local_installers/cuda_11.6.2_510.47.03_linux.run'
+            ],
+            [
+                '11.6.1',
+                'https://developer.download.nvidia.com/compute/cuda/11.6.1/local_installers/cuda_11.6.1_510.47.03_linux.run'
+            ],
+            [
+                '11.6.0',
+                'https://developer.download.nvidia.com/compute/cuda/11.6.0/local_installers/cuda_11.6.0_510.39.01_linux.run'
+            ],
+            [
+                '11.5.2',
+                'https://developer.download.nvidia.com/compute/cuda/11.5.2/local_installers/cuda_11.5.2_495.29.05_linux.run'
+            ],
+            [
+                '11.5.1',
+                'https://developer.download.nvidia.com/compute/cuda/11.5.1/local_installers/cuda_11.5.1_495.29.05_linux.run'
+            ],
+            [
+                '11.5.0',
+                'https://developer.download.nvidia.com/compute/cuda/11.5.0/local_installers/cuda_11.5.0_495.29.05_linux.run'
+            ],
+            [
+                '11.4.3',
+                'https://developer.download.nvidia.com/compute/cuda/11.4.3/local_installers/cuda_11.4.3_470.82.01_linux.run'
+            ],
+            [
+                '11.4.2',
+                'https://developer.download.nvidia.com/compute/cuda/11.4.2/local_installers/cuda_11.4.2_470.57.02_linux.run'
+            ],
+            [
+                '11.4.1',
+                'https://developer.download.nvidia.com/compute/cuda/11.4.1/local_installers/cuda_11.4.1_470.57.02_linux.run'
+            ],
+            [
+                '11.4.0',
+                'https://developer.download.nvidia.com/compute/cuda/11.4.0/local_installers/cuda_11.4.0_470.42.01_linux.run'
+            ],
+            [
+                '11.3.1',
+                'https://developer.download.nvidia.com/compute/cuda/11.3.1/local_installers/cuda_11.3.1_465.19.01_linux.run'
+            ],
+            [
+                '11.3.0',
+                'https://developer.download.nvidia.com/compute/cuda/11.3.0/local_installers/cuda_11.3.0_465.19.01_linux.run'
+            ],
+            [
+                '11.2.2',
+                'https://developer.download.nvidia.com/compute/cuda/11.2.2/local_installers/cuda_11.2.2_460.32.03_linux.run'
+            ],
+            [
+                '11.2.1',
+                'https://developer.download.nvidia.com/compute/cuda/11.2.1/local_installers/cuda_11.2.1_460.32.03_linux.run'
+            ],
+            [
+                '11.2.0',
+                'https://developer.download.nvidia.com/compute/cuda/11.2.0/local_installers/cuda_11.2.0_460.27.04_linux.run'
+            ],
+            [
+                '11.1.1',
+                'https://developer.download.nvidia.com/compute/cuda/11.1.1/local_installers/cuda_11.1.1_455.32.00_linux.run'
+            ],
+            [
+                '11.0.3',
+                'https://developer.download.nvidia.com/compute/cuda/11.0.3/local_installers/cuda_11.0.3_450.51.06_linux.run'
+            ],
+            [
+                '10.2.89',
+                'https://developer.download.nvidia.com/compute/cuda/10.2/Prod/local_installers/cuda_10.2.89_440.33.01_linux.run'
+            ],
+            [
+                '10.1.243',
+                'https://developer.download.nvidia.com/compute/cuda/10.1/Prod/local_installers/cuda_10.1.243_418.87.00_linux.run'
+            ],
+            [
+                '10.0.130',
+                'https://developer.nvidia.com/compute/cuda/10.0/Prod/local_installers/cuda_10.0.130_410.48_linux'
+            ],
+            [
+                '9.2.148',
+                'https://developer.nvidia.com/compute/cuda/9.2/Prod2/local_installers/cuda_9.2.148_396.37_linux'
+            ],
+            [
+                '8.0.61',
+                'https://developer.nvidia.com/compute/cuda/8.0/Prod2/local_installers/cuda_8.0.61_375.26_linux-run'
+            ]
+        ]);
+        this.cudnnVersionToURL = new Map([
+            [
+                '8.5.0',
+                new Map([
+                    [
+                        10,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-8.5.0.96_cuda10-archive.tar.xz'
+                    ],
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-8.5.0.96_cuda11-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.6.0',
+                new Map([
+                    [
+                        10,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-8.6.0.163_cuda10-archive.tar.xz'
+                    ],
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-8.6.0.163_cuda11-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.7.0',
+                new Map([
+                    [
+                        10,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-8.7.0.84_cuda10-archive.tar.xz'
+                    ],
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-8.7.0.84_cuda11-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.8.0',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-8.8.0.121_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-8.8.0.121_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.8.1',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-8.8.1.3_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-8.8.1.3_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.9.0',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-8.9.0.131_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-8.9.0.131_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.9.1',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-8.9.1.23_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-8.9.1.23_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.9.2',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-8.9.2.26_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-8.9.2.26_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.9.3',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-8.9.3.28_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-8.9.3.28_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.9.4',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-8.9.4.25_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-8.9.4.25_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.9.5',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-8.9.5.30_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-8.9.5.30_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.9.6',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-8.9.6.50_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-8.9.6.50_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '8.9.7',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-8.9.7.29_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-8.9.7.29_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '9.0.0',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-9.0.0.312_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-9.0.0.312_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '9.1.0',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-9.1.0.70_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-9.1.0.70_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '9.1.1',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-9.1.1.17_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-9.1.1.17_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ],
+            [
+                '9.2.0',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-9.2.0.82_cuda11-archive.tar.xz'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-9.2.0.82_cuda12-archive.tar.xz'
+                    ]
+                ])
+            ]
+        ]);
+    }
+    static get Instance() {
+        return this._instance || (this._instance = new this());
+    }
+}
+exports.LinuxX8664Links = LinuxX8664Links;
+
+
+/***/ }),
+
+/***/ 4892:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.WindowsLinks = void 0;
+/* eslint-disable filenames/match-regex */
 const links_1 = __nccwpck_require__(2642);
 const semver_1 = __nccwpck_require__(1383);
-// # Dictionary of known cuda versions and thier download URLS, which do not follow a consistent pattern :(
-// $CUDA_KNOWN_URLS = @{
-//     "8.0.44" = "http://developer.nvidia.com/compute/cuda/8.0/Prod/network_installers/cuda_8.0.44_win10_network-exe";
-//     "8.0.61" = "http://developer.nvidia.com/compute/cuda/8.0/Prod2/network_installers/cuda_8.0.61_win10_network-exe";
-//     "9.0.176" = "http://developer.nvidia.com/compute/cuda/9.0/Prod/network_installers/cuda_9.0.176_win10_network-exe";
-//     "9.1.85" = "http://developer.nvidia.com/compute/cuda/9.1/Prod/network_installers/cuda_9.1.85_win10_network";
-//     "9.2.148" = "http://developer.nvidia.com/compute/cuda/9.2/Prod2/network_installers2/cuda_9.2.148_win10_network";
-//     "10.0.130" = "http://developer.nvidia.com/compute/cuda/10.0/Prod/network_installers/cuda_10.0.130_win10_network";
-//     "10.1.105" = "http://developer.nvidia.com/compute/cuda/10.1/Prod/network_installers/cuda_10.1.105_win10_network.exe";
-//     "10.1.168" = "http://developer.nvidia.com/compute/cuda/10.1/Prod/network_installers/cuda_10.1.168_win10_network.exe";
-//     "10.1.243" = "http://developer.download.nvidia.com/compute/cuda/10.1/Prod/network_installers/cuda_10.1.243_win10_network.exe";
-//     "10.2.89" = "http://developer.download.nvidia.com/compute/cuda/10.2/Prod/network_installers/cuda_10.2.89_win10_network.exe";
-//     "11.0.167" = "http://developer.download.nvidia.com/compute/cuda/11.0.1/network_installers/cuda_11.0.1_win10_network.exe"
-// }
 /**
  * Singleton class for windows links.
  */
@@ -1117,6 +2322,229 @@ class WindowsLinks extends links_1.AbstractLinks {
                 'https://developer.nvidia.com/compute/cuda/8.0/Prod2/local_installers/cuda_8.0.61_win10-exe'
             ]
         ]);
+        this.cudnnVersionToURL = new Map([
+            [
+                '8.5.0',
+                new Map([
+                    [
+                        10,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-8.5.0.96_cuda10-archive.zip'
+                    ],
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-8.5.0.96_cuda11-archive.zip'
+                    ]
+                ])
+            ],
+            [
+                '8.6.0',
+                new Map([
+                    [
+                        10,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-8.6.0.163_cuda10-archive.zip'
+                    ],
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-8.6.0.163_cuda11-archive.zip'
+                    ]
+                ])
+            ],
+            [
+                '8.7.0',
+                new Map([
+                    [
+                        10,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-8.7.0.84_cuda10-archive.zip'
+                    ],
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-8.7.0.84_cuda11-archive.zip'
+                    ]
+                ])
+            ],
+            [
+                '8.8.0',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-8.8.0.121_cuda11-archive.zip'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-8.8.0.121_cuda12-archive.zip'
+                    ]
+                ])
+            ],
+            [
+                '8.8.1',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-8.8.1.3_cuda11-archive.zip'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-8.8.1.3_cuda12-archive.zip'
+                    ]
+                ])
+            ],
+            [
+                '8.9.0',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-8.9.0.131_cuda11-archive.zip'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-8.9.0.131_cuda12-archive.zip'
+                    ]
+                ])
+            ],
+            [
+                '8.9.1',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-8.9.1.23_cuda11-archive.zip'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-8.9.1.23_cuda12-archive.zip'
+                    ]
+                ])
+            ],
+            [
+                '8.9.2',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-8.9.2.26_cuda11-archive.zip'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-8.9.2.26_cuda12-archive.zip'
+                    ]
+                ])
+            ],
+            [
+                '8.9.3',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-8.9.3.28_cuda11-archive.zip'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-8.9.3.28_cuda12-archive.zip'
+                    ]
+                ])
+            ],
+            [
+                '8.9.4',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-8.9.4.25_cuda11-archive.zip'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-8.9.4.25_cuda12-archive.zip'
+                    ]
+                ])
+            ],
+            [
+                '8.9.5',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-8.9.5.30_cuda11-archive.zip'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-8.9.5.30_cuda12-archive.zip'
+                    ]
+                ])
+            ],
+            [
+                '8.9.6',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-8.9.6.50_cuda11-archive.zip'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-8.9.6.50_cuda12-archive.zip'
+                    ]
+                ])
+            ],
+            [
+                '8.9.7',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-8.9.7.29_cuda11-archive.zip'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-8.9.7.29_cuda12-archive.zip'
+                    ]
+                ])
+            ],
+            [
+                '9.0.0',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-9.0.0.312_cuda11-archive.zip'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-9.0.0.312_cuda12-archive.zip'
+                    ]
+                ])
+            ],
+            [
+                '9.1.0',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-9.1.0.70_cuda11-archive.zip'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-9.1.0.70_cuda12-archive.zip'
+                    ]
+                ])
+            ],
+            [
+                '9.1.1',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-9.1.1.17_cuda11-archive.zip'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-9.1.1.17_cuda12-archive.zip'
+                    ]
+                ])
+            ],
+            [
+                '9.2.0',
+                new Map([
+                    [
+                        11,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-9.2.0.82_cuda11-archive.zip'
+                    ],
+                    [
+                        12,
+                        'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-9.2.0.82_cuda12-archive.zip'
+                    ]
+                ])
+            ]
+        ]);
     }
     static get Instance() {
         return this._instance || (this._instance = new this());
@@ -1187,6 +2615,7 @@ const version_1 = __nccwpck_require__(8217);
 const installer_1 = __nccwpck_require__(1480);
 const update_path_1 = __nccwpck_require__(4985);
 const path_1 = __importDefault(__nccwpck_require__(1017));
+const os_1 = __importDefault(__nccwpck_require__(2037));
 function run() {
     var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
@@ -1195,8 +2624,11 @@ function run() {
             core.debug(`Desired cuda version: ${cuda}`);
             const cudnn = core.getInput('cudnn');
             core.debug(`Desired cudnn version: ${cudnn}`);
-            const cudnn_url = core.getInput('cudnn_url');
-            core.debug(`Desired cuDNN: ${cudnn_url}`);
+            let arch = core.getInput('arch');
+            if (arch === '') {
+                arch = os_1.default.arch();
+            }
+            core.debug(`Desired arch: ${arch}`);
             const cudnn_archive_dir = core.getInput('cudnn_archive_dir');
             core.debug(`Desired cuDNN archive dir: ${cudnn_archive_dir}`);
             const subPackages = core.getInput('sub-packages');
@@ -1222,7 +2654,7 @@ function run() {
             const methodParsed = (0, method_1.parseMethod)(methodString);
             core.debug(`Parsed method: ${methodParsed}`);
             // Parse version string
-            const cuda_toolkit = yield (0, version_1.getVersion)(cuda, cudnn, cudnn_url, methodParsed);
+            const cuda_toolkit = yield (0, version_1.getVersion)(cuda, cudnn, arch, methodParsed);
             // Parse linuxLocalArgs array
             let linuxLocalArgsArray = [];
             try {
@@ -1252,7 +2684,7 @@ function run() {
             }
             else {
                 // Download
-                const [executablePath, archivePath] = yield (0, downloader_1.download)(cuda_toolkit, methodParsed, useGitHubCache);
+                const [executablePath, archivePath] = yield (0, downloader_1.download)(cuda_toolkit, methodParsed, arch, useGitHubCache);
                 // Install CUDA
                 yield (0, installer_1.install)(executablePath, cuda_toolkit, subPackagesArray, linuxLocalArgsArray);
                 cudnnArchivePath = archivePath;
@@ -1564,19 +2996,23 @@ const platform_1 = __nccwpck_require__(9238);
 const semver_1 = __nccwpck_require__(1383);
 const get_links_1 = __nccwpck_require__(1451);
 // Helper for converting string to SemVer and verifying it exists in the links
-function getVersion(cudaVersionString, cudnnVersionString, cudnnDownloadURL, method) {
+function getVersion(cudaVersionString, cudnnVersionString, arch, method) {
     return __awaiter(this, void 0, void 0, function* () {
         const version = new semver_1.SemVer(cudaVersionString);
-        // const cudnn_version = new SemVer(cudnnVersionString)
-        const links = yield (0, get_links_1.getLinks)();
+        let cudnn_version = new semver_1.SemVer('0.0.0');
+        if (cudnnVersionString.length > 0) {
+            cudnn_version = new semver_1.SemVer(cudnnVersionString);
+        }
+        const links = yield (0, get_links_1.getLinks)(arch);
+        const currentOs = yield (0, platform_1.getOs)();
         let versions;
-        let cudnn_versions;
+        let cudnnVersions;
         switch (method) {
             case 'local':
                 versions = links.getAvailableLocalCudaVersions();
                 break;
             case 'network':
-                switch (yield (0, platform_1.getOs)()) {
+                switch (currentOs) {
                     case platform_1.OSType.linux:
                         // TODO adapt this to actual available network versions for linux
                         versions = links.getAvailableLocalCudaVersions();
@@ -1586,41 +3022,48 @@ function getVersion(cudaVersionString, cudnnVersionString, cudnnDownloadURL, met
                         break;
                 }
         }
-        core.debug(`Available CUDA versions: ${versions}`);
-        core.debug(`Available cudnn versions: ${cudnn_versions}`);
+        core.info(`Available CUDA versions: ${versions}`);
         if (versions.find(v => v.compare(version) === 0) !== undefined) {
-            core.debug(`CUDA Version available: ${version}`);
-            const toolkit = {
-                cuda_version: version,
-                cudnn_version: cudnnDownloadURL.length > 0 && cudnnVersionString.length > 0
-                    ? new semver_1.SemVer(cudnnVersionString)
-                    : undefined,
-                cuda_url: undefined,
-                cudnn_url: cudnnDownloadURL.length > 0 && cudnnVersionString.length > 0
-                    ? new URL(cudnnDownloadURL)
-                    : undefined
-            };
-            return toolkit;
-            // if (
-            //   cudnn_versions.find(vv => vv.compare(cudnn_version) === 0) !== undefined
-            // ) {
-            //   core.debug(`cudnn version available: ${cudnn_version}`)
-            //   const toolkit: CUDAToolkit = {
-            //     cuda_version: version,
-            //     cudnn_version: cudnn_version,
-            //     cuda_url: new URL(''),
-            //     cudnn_url: new URL('')
-            //   }
-            //   return toolkit
-            // } else {
-            //   core.debug(`Version not available error!`)
-            //   throw new Error(`Cudnn version not available: ${version}`)
-            // }
+            core.info(`Found CUDA version that matches: ${version}`);
+            switch (currentOs) {
+                case platform_1.OSType.linux:
+                    cudnnVersions = links.getAvailableCudnnVersions();
+                    break;
+                case platform_1.OSType.windows:
+                    cudnnVersions = links.getAvailableCudnnVersions();
+                    break;
+            }
+            if (cudnnVersionString.length === 0) {
+                return {
+                    cuda_version: version,
+                    cudnn_version: undefined,
+                    cuda_url: undefined,
+                    cudnn_url: undefined
+                };
+            }
+            core.info(`Available cudnn versions: ${cudnnVersions}`);
+            if (cudnnVersions.find(v => v.compare(cudnn_version) === 0) !== undefined) {
+                core.info(`Found cudnn version that matches: ${cudnn_version}`);
+                const cudnnInfo = links.cudnnVersionToURL.get(cudnnVersionString);
+                if (cudnnInfo !== undefined) {
+                    const compatibleCudnn = cudnnInfo.get(version.major);
+                    if (compatibleCudnn === undefined) {
+                        core.error(`cudnn version ${cudnn_version} is not compatible with CUDA version ${version}`);
+                        throw new Error(`cudnn version ${cudnn_version} is not compatible with CUDA version ${version}`);
+                    }
+                    return {
+                        cuda_version: version,
+                        cudnn_version: cudnn_version,
+                        cuda_url: undefined,
+                        cudnn_url: new URL(compatibleCudnn)
+                    };
+                }
+                core.error(`internal error: cudnn version ${cudnn_version} not found in cudnnVersionToURL`);
+                throw new Error(`internal error: cudnn version ${cudnn_version} not found in cudnnVersionToURL`);
+            }
         }
-        else {
-            core.debug(`Version not available error!`);
-            throw new Error(`CUDA version not available: ${version}`);
-        }
+        core.debug(`Version not available error!`);
+        throw new Error(`CUDA version not available: ${version}`);
     });
 }
 exports.getVersion = getVersion;

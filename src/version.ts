@@ -3,28 +3,32 @@ import {OSType, getOs, CUDAToolkit} from './platform'
 import {AbstractLinks} from './links/links'
 import {Method} from './method'
 import {SemVer} from 'semver'
-import {WindowsLinks} from './links/windows-links'
+import {WindowsLinks} from './links/windows-x86_64-links'
 import {getLinks} from './links/get-links'
 
 // Helper for converting string to SemVer and verifying it exists in the links
 export async function getVersion(
   cudaVersionString: string,
   cudnnVersionString: string,
-  cudnnDownloadURL: string,
+  arch: string,
   method: Method
 ): Promise<CUDAToolkit> {
   const version = new SemVer(cudaVersionString)
-  // const cudnn_version = new SemVer(cudnnVersionString)
+  let cudnn_version = new SemVer('0.0.0')
+  if (cudnnVersionString.length > 0) {
+    cudnn_version = new SemVer(cudnnVersionString)
+  }
 
-  const links: AbstractLinks = await getLinks()
+  const links: AbstractLinks = await getLinks(arch)
+  const currentOs = await getOs()
   let versions
-  let cudnn_versions
+  let cudnnVersions
   switch (method) {
     case 'local':
       versions = links.getAvailableLocalCudaVersions()
       break
     case 'network':
-      switch (await getOs()) {
+      switch (currentOs) {
         case OSType.linux:
           // TODO adapt this to actual available network versions for linux
           versions = links.getAvailableLocalCudaVersions()
@@ -34,42 +38,57 @@ export async function getVersion(
           break
       }
   }
-  core.debug(`Available CUDA versions: ${versions}`)
-  core.debug(`Available cudnn versions: ${cudnn_versions}`)
+  core.info(`Available CUDA versions: ${versions}`)
   if (versions.find(v => v.compare(version) === 0) !== undefined) {
-    core.debug(`CUDA Version available: ${version}`)
+    core.info(`Found CUDA version that matches: ${version}`)
 
-    const toolkit: CUDAToolkit = {
-      cuda_version: version,
-      cudnn_version:
-        cudnnDownloadURL.length > 0 && cudnnVersionString.length > 0
-          ? new SemVer(cudnnVersionString)
-          : undefined,
-      cuda_url: undefined,
-      cudnn_url:
-        cudnnDownloadURL.length > 0 && cudnnVersionString.length > 0
-          ? new URL(cudnnDownloadURL)
-          : undefined
+    switch (currentOs) {
+      case OSType.linux:
+        cudnnVersions = links.getAvailableCudnnVersions()
+        break
+      case OSType.windows:
+        cudnnVersions = (links as WindowsLinks).getAvailableCudnnVersions()
+        break
     }
-    return toolkit
+    if (cudnnVersionString.length === 0) {
+      return {
+        cuda_version: version,
+        cudnn_version: undefined,
+        cuda_url: undefined,
+        cudnn_url: undefined
+      }
+    }
 
-    // if (
-    //   cudnn_versions.find(vv => vv.compare(cudnn_version) === 0) !== undefined
-    // ) {
-    //   core.debug(`cudnn version available: ${cudnn_version}`)
-    //   const toolkit: CUDAToolkit = {
-    //     cuda_version: version,
-    //     cudnn_version: cudnn_version,
-    //     cuda_url: new URL(''),
-    //     cudnn_url: new URL('')
-    //   }
-    //   return toolkit
-    // } else {
-    //   core.debug(`Version not available error!`)
-    //   throw new Error(`Cudnn version not available: ${version}`)
-    // }
-  } else {
-    core.debug(`Version not available error!`)
-    throw new Error(`CUDA version not available: ${version}`)
+    core.info(`Available cudnn versions: ${cudnnVersions}`)
+    if (cudnnVersions.find(v => v.compare(cudnn_version) === 0) !== undefined) {
+      core.info(`Found cudnn version that matches: ${cudnn_version}`)
+      const cudnnInfo = links.cudnnVersionToURL.get(cudnnVersionString)
+      if (cudnnInfo !== undefined) {
+        const compatibleCudnn = cudnnInfo.get(version.major)
+        if (compatibleCudnn === undefined) {
+          core.error(
+            `cudnn version ${cudnn_version} is not compatible with CUDA version ${version}`
+          )
+          throw new Error(
+            `cudnn version ${cudnn_version} is not compatible with CUDA version ${version}`
+          )
+        }
+        return {
+          cuda_version: version,
+          cudnn_version: cudnn_version,
+          cuda_url: undefined,
+          cudnn_url: new URL(compatibleCudnn)
+        }
+      }
+      core.error(
+        `internal error: cudnn version ${cudnn_version} not found in cudnnVersionToURL`
+      )
+      throw new Error(
+        `internal error: cudnn version ${cudnn_version} not found in cudnnVersionToURL`
+      )
+    }
   }
+
+  core.debug(`Version not available error!`)
+  throw new Error(`CUDA version not available: ${version}`)
 }

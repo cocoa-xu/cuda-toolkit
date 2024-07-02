@@ -1,6 +1,6 @@
 import {AbstractLinks} from '../../src/links/links'
 import {SemVer} from 'semver'
-import {WindowsLinks} from '../../src/links/windows-links'
+import {WindowsLinks} from '../../src/links/windows-x86_64-links'
 
 test.concurrent('Windows Cuda versions in descending order', async () => {
   const wLinks: AbstractLinks = WindowsLinks.Instance

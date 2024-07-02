@@ -1,11 +1,11 @@
 import {AbstractLinks} from './links'
 
 /**
- * Singleton class for windows links.
+ * Singleton class for aarch64 Linux links.
  */
-export class LinuxLinks extends AbstractLinks {
+export class LinuxAArch64Links extends AbstractLinks {
   // Singleton instance
-  private static _instance: LinuxLinks
+  private static _instance: LinuxAArch64Links
 
   // Private constructor to prevent instantiation
   private constructor() {
@@ -161,9 +161,65 @@ export class LinuxLinks extends AbstractLinks {
         'https://developer.nvidia.com/compute/cuda/8.0/Prod2/local_installers/cuda_8.0.61_375.26_linux-run'
       ]
     ])
+    this.cudnnVersionToURL = new Map([
+      [
+        '8.9.0',
+        new Map([
+          [
+            12,
+            'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-aarch64/cudnn-linux-aarch64-8.9.0.131_cuda12-archive.tar.xz'
+          ]
+        ])
+      ],
+      [
+        '8.9.5',
+        new Map([
+          [
+            12,
+            'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-aarch64/cudnn-linux-aarch64-8.9.5.30_cuda12-archive.tar.xz'
+          ]
+        ])
+      ],
+      [
+        '9.0.0',
+        new Map([
+          [
+            12,
+            'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-aarch64/cudnn-linux-aarch64-9.0.0.312_cuda12-archive.tar.xz'
+          ]
+        ])
+      ],
+      [
+        '9.1.0',
+        new Map([
+          [
+            12,
+            'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-aarch64/cudnn-linux-aarch64-9.1.0.70_cuda12-archive.tar.xz'
+          ]
+        ])
+      ],
+      [
+        '9.1.1',
+        new Map([
+          [
+            12,
+            'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-aarch64/cudnn-linux-aarch64-9.1.1.17_cuda12-archive.tar.xz'
+          ]
+        ])
+      ],
+      [
+        '9.2.0',
+        new Map([
+          [
+            12,
+            'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-aarch64/cudnn-linux-aarch64-9.2.0.82_cuda12-archive.tar.xz'
+          ]
+        ])
+      ]
+    ])
   }
 
-  static get Instance(): LinuxLinks {
+  static get Instance(): LinuxAArch64Links {
     return this._instance || (this._instance = new this())
   }
 }
