@@ -189,7 +189,9 @@ export async function installCudnn(
   switch (await getOs()) {
     case OSType.windows:
       try {
-        core.info(`moving cuDNN header files: ${cudnnArchivePath}`)
+        core.info(
+          `moving cuDNN header files: ${cudaPath}\\${filename}\\include\\*`
+        )
         command = 'powershell'
         installArgs = [
           '-command',
@@ -212,7 +214,9 @@ export async function installCudnn(
       }
 
       try {
-        core.info(`moving cuDNN lib files: ${cudnnArchivePath}`)
+        core.info(
+          `moving cuDNN lib files: ${cudaPath}\\${filename}\\lib\\x64\\*`
+        )
         command = 'powershell'
         installArgs = [
           '-command',

@@ -528,7 +528,7 @@ function installCudnn(cudnnArchivePath, directoryName, cudaPath) {
         switch (yield (0, platform_1.getOs)()) {
             case platform_1.OSType.windows:
                 try {
-                    core.info(`moving cuDNN header files: ${cudnnArchivePath}`);
+                    core.info(`moving cuDNN header files: ${cudaPath}\\${filename}\\include\\*`);
                     command = 'powershell';
                     installArgs = [
                         '-command',
@@ -551,7 +551,7 @@ function installCudnn(cudnnArchivePath, directoryName, cudaPath) {
                     throw error;
                 }
                 try {
-                    core.info(`moving cuDNN lib files: ${cudnnArchivePath}`);
+                    core.info(`moving cuDNN lib files: ${cudaPath}\\${filename}\\lib\\x64\\*`);
                     command = 'powershell';
                     installArgs = [
                         '-command',
