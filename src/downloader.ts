@@ -50,35 +50,22 @@ export async function download(
   }
 
   if (toolkit.cudnn_version !== undefined) {
-    const cudnnPath = tc.find(cudnnToolId, `${toolkit.cudnn_version}`)
-    if (cudnnPath) {
-      // Tool is already in cache
-      core.debug(`Found cudnn in local machine cache ${cudnnPath}`)
-      cudnnArchivePath = cudnnPath
-    } else {
-      const cudnnCacheKey = `${cudnnToolId}-${toolkit.cudnn_version}`
-      cudnnArchivePath = await fromCacheOrDownload(
-        cudnnToolName,
-        toolkit,
-        method,
-        cudnnCacheKey,
-        useGitHubCache,
-        osType,
-        arch,
-        cudnnToolId,
-        DownloadType.cudnn
-      )
-    }
+    cudnnArchivePath = await fromCacheOrDownload(
+      cudnnToolName,
+      toolkit,
+      method,
+      '',
+      false,
+      osType,
+      arch,
+      cudnnToolId,
+      DownloadType.cudnn
+    )
   }
 
   // String with full executable path
   const fullExecutablePath = await verifyCachePath(executablePath, '0755')
-  let fullArchivedPath: string | undefined
-
-  if (cudnnArchivePath !== undefined) {
-    fullArchivedPath = await verifyCachePath(cudnnArchivePath, undefined)
-  }
-  return [fullExecutablePath, fullArchivedPath]
+  return [fullExecutablePath, cudnnArchivePath]
 }
 
 export function getFileExtension(
@@ -179,9 +166,13 @@ async function fromCacheOrDownload(
       downloadURL.toString(),
       destFileName
     )
-    core.debug(
+    core.info(
       `Package URL for ${downloadType}=${downloadURL}, destFileName=${destFileName}, downloadPath=${downloadPath}`
     )
+    if (!useGitHubCache) {
+      return downloadPath
+    }
+
     // Copy file to GitHub cachePath
     core.debug(`Copying ${destFileName} to ${cachePath}`)
     await io.mkdirP(cachePath)

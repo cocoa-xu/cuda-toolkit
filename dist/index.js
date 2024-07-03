@@ -181,24 +181,11 @@ function download(toolkit, method, arch, useGitHubCache) {
             executablePath = yield fromCacheOrDownload(toolName, toolkit, method, cacheKey, useGitHubCache, osType, arch, toolId, platform_1.DownloadType.cuda);
         }
         if (toolkit.cudnn_version !== undefined) {
-            const cudnnPath = tc.find(cudnnToolId, `${toolkit.cudnn_version}`);
-            if (cudnnPath) {
-                // Tool is already in cache
-                core.debug(`Found cudnn in local machine cache ${cudnnPath}`);
-                cudnnArchivePath = cudnnPath;
-            }
-            else {
-                const cudnnCacheKey = `${cudnnToolId}-${toolkit.cudnn_version}`;
-                cudnnArchivePath = yield fromCacheOrDownload(cudnnToolName, toolkit, method, cudnnCacheKey, useGitHubCache, osType, arch, cudnnToolId, platform_1.DownloadType.cudnn);
-            }
+            cudnnArchivePath = yield fromCacheOrDownload(cudnnToolName, toolkit, method, '', false, osType, arch, cudnnToolId, platform_1.DownloadType.cudnn);
         }
         // String with full executable path
         const fullExecutablePath = yield verifyCachePath(executablePath, '0755');
-        let fullArchivedPath;
-        if (cudnnArchivePath !== undefined) {
-            fullArchivedPath = yield verifyCachePath(cudnnArchivePath, undefined);
-        }
-        return [fullExecutablePath, fullArchivedPath];
+        return [fullExecutablePath, cudnnArchivePath];
     });
 }
 exports.download = download;
@@ -278,7 +265,10 @@ function fromCacheOrDownload(toolName, toolkit, method, cacheKey, useGitHubCache
             const destFileName = `${toolId}_${version_string}.${fileExtension}`;
             // Download executable
             const downloadPath = yield tc.downloadTool(downloadURL.toString(), destFileName);
-            core.debug(`Package URL for ${downloadType}=${downloadURL}, destFileName=${destFileName}, downloadPath=${downloadPath}`);
+            core.info(`Package URL for ${downloadType}=${downloadURL}, destFileName=${destFileName}, downloadPath=${downloadPath}`);
+            if (!useGitHubCache) {
+                return downloadPath;
+            }
             // Copy file to GitHub cachePath
             core.debug(`Copying ${destFileName} to ${cachePath}`);
             yield io.mkdirP(cachePath);
@@ -517,9 +507,9 @@ function installCudnn(cudnnArchivePath, directoryName, cudaPath) {
                         '-command',
                         'Move-Item',
                         '-Path',
-                        `'${cudaPath}\\${filename}\\bin\\*'`,
+                        `"'${cudaPath}\\${filename}\\bin\\*'"`,
                         '-DestinationPath',
-                        `'${cudaPath}\\bin'`,
+                        `"'${cudaPath}\\bin\\'"`,
                         '-Force',
                         '-ErrorAction',
                         'SilentlyContinue'
@@ -544,9 +534,9 @@ function installCudnn(cudnnArchivePath, directoryName, cudaPath) {
                         '-command',
                         'Move-Item',
                         '-Path',
-                        `'${cudaPath}\\${filename}\\include\\*'`,
+                        `"'${cudaPath}\\${filename}\\include\\*'"`,
                         '-DestinationPath',
-                        `'${cudaPath}\\include'`,
+                        `"'${cudaPath}\\include\\'"`,
                         '-Force',
                         '-ErrorAction',
                         'SilentlyContinue'
@@ -567,9 +557,9 @@ function installCudnn(cudnnArchivePath, directoryName, cudaPath) {
                         '-command',
                         'Move-Item',
                         '-Path',
-                        `'${cudaPath}\\${filename}\\lib\\x64\\*'`,
+                        `"'${cudaPath}\\${filename}\\lib\\x64\\*'"`,
                         '-DestinationPath',
-                        `'${cudaPath}\\lib\\x64'`,
+                        `"'${cudaPath}\\lib\\x64\\'"`,
                         '-Force',
                         '-ErrorAction',
                         'SilentlyContinue'
