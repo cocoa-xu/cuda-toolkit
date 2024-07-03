@@ -370,7 +370,6 @@ const core = __importStar(__nccwpck_require__(2186));
 const platform_1 = __nccwpck_require__(9238);
 const child_process_1 = __nccwpck_require__(2081);
 const downloader_1 = __nccwpck_require__(5587);
-const io = __importStar(__nccwpck_require__(7436));
 const fs_1 = __importDefault(__nccwpck_require__(7147));
 function install(executablePath, toolkit, subPackagesArray, linuxLocalArgsArray) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -513,8 +512,22 @@ function installCudnn(cudnnArchivePath, directoryName, cudaPath) {
                 break;
             case platform_1.OSType.windows:
                 try {
-                    yield io.cp(`${cudaPath}\\${filename}\\bin\\*`, `${cudaPath}\\bin`, options);
-                    yield io.rmRF(`${cudaPath}\\${filename}\\bin`);
+                    command = 'powershell';
+                    installArgs = [
+                        '-command',
+                        'Move-Item',
+                        '-Path',
+                        `'${cudaPath}\\${filename}\\bin\\*'`,
+                        '-DestinationPath',
+                        `'${cudaPath}\\bin'`,
+                        '-Force',
+                        '-ErrorAction',
+                        'SilentlyContinue'
+                    ];
+                    yield (0, child_process_1.spawn)(command, installArgs, {
+                        stdio: 'inherit',
+                        shell: true
+                    });
                 }
                 catch (error) {
                     core.error(`Error during install cuDNN shared libraries: ${error}`);
@@ -526,8 +539,22 @@ function installCudnn(cudnnArchivePath, directoryName, cudaPath) {
             case platform_1.OSType.windows:
                 try {
                     core.info(`moving cuDNN header files: ${cudnnArchivePath}`);
-                    yield io.cp(`${cudaPath}\\${filename}\\include\\*`, `${cudaPath}\\include`, options);
-                    yield io.rmRF(`${cudaPath}\\${filename}\\include`);
+                    command = 'powershell';
+                    installArgs = [
+                        '-command',
+                        'Move-Item',
+                        '-Path',
+                        `'${cudaPath}\\${filename}\\include\\*'`,
+                        '-DestinationPath',
+                        `'${cudaPath}\\include'`,
+                        '-Force',
+                        '-ErrorAction',
+                        'SilentlyContinue'
+                    ];
+                    yield (0, child_process_1.spawn)(command, installArgs, {
+                        stdio: 'inherit',
+                        shell: true
+                    });
                 }
                 catch (error) {
                     core.error(`Error during install cuDNN header files: ${error}`);
@@ -535,8 +562,22 @@ function installCudnn(cudnnArchivePath, directoryName, cudaPath) {
                 }
                 try {
                     core.info(`moving cuDNN lib files: ${cudnnArchivePath}`);
-                    yield io.cp(`${cudaPath}\\${filename}\\lib\\x64\\*`, `${cudaPath}\\lib\\x64`, options);
-                    yield io.rmRF(`${cudaPath}\\${filename}\\lib\\x64`);
+                    command = 'powershell';
+                    installArgs = [
+                        '-command',
+                        'Move-Item',
+                        '-Path',
+                        `'${cudaPath}\\${filename}\\lib\\x64\\*'`,
+                        '-DestinationPath',
+                        `'${cudaPath}\\lib\\x64'`,
+                        '-Force',
+                        '-ErrorAction',
+                        'SilentlyContinue'
+                    ];
+                    yield (0, child_process_1.spawn)(command, installArgs, {
+                        stdio: 'inherit',
+                        shell: true
+                    });
                 }
                 catch (error) {
                     core.error(`Error during install cuDNN lib files: ${error}`);

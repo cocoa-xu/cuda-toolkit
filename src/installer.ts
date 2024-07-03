@@ -3,7 +3,6 @@ import * as core from '@actions/core'
 import {OSType, getOs, CUDAToolkit, DownloadType} from './platform'
 import {spawn} from 'child_process'
 import {getFileExtension} from './downloader'
-import * as io from '@actions/io'
 import fs from 'fs'
 
 export async function install(
@@ -164,12 +163,22 @@ export async function installCudnn(
       break
     case OSType.windows:
       try {
-        await io.cp(
-          `${cudaPath}\\${filename}\\bin\\*`,
-          `${cudaPath}\\bin`,
-          options
-        )
-        await io.rmRF(`${cudaPath}\\${filename}\\bin`)
+        command = 'powershell'
+        installArgs = [
+          '-command',
+          'Move-Item',
+          '-Path',
+          `'${cudaPath}\\${filename}\\bin\\*'`,
+          '-DestinationPath',
+          `'${cudaPath}\\bin'`,
+          '-Force',
+          '-ErrorAction',
+          'SilentlyContinue'
+        ]
+        await spawn(command, installArgs, {
+          stdio: 'inherit',
+          shell: true
+        })
       } catch (error) {
         core.error(`Error during install cuDNN shared libraries: ${error}`)
         throw error
@@ -181,12 +190,22 @@ export async function installCudnn(
     case OSType.windows:
       try {
         core.info(`moving cuDNN header files: ${cudnnArchivePath}`)
-        await io.cp(
-          `${cudaPath}\\${filename}\\include\\*`,
-          `${cudaPath}\\include`,
-          options
-        )
-        await io.rmRF(`${cudaPath}\\${filename}\\include`)
+        command = 'powershell'
+        installArgs = [
+          '-command',
+          'Move-Item',
+          '-Path',
+          `'${cudaPath}\\${filename}\\include\\*'`,
+          '-DestinationPath',
+          `'${cudaPath}\\include'`,
+          '-Force',
+          '-ErrorAction',
+          'SilentlyContinue'
+        ]
+        await spawn(command, installArgs, {
+          stdio: 'inherit',
+          shell: true
+        })
       } catch (error) {
         core.error(`Error during install cuDNN header files: ${error}`)
         throw error
@@ -194,12 +213,22 @@ export async function installCudnn(
 
       try {
         core.info(`moving cuDNN lib files: ${cudnnArchivePath}`)
-        await io.cp(
-          `${cudaPath}\\${filename}\\lib\\x64\\*`,
-          `${cudaPath}\\lib\\x64`,
-          options
-        )
-        await io.rmRF(`${cudaPath}\\${filename}\\lib\\x64`)
+        command = 'powershell'
+        installArgs = [
+          '-command',
+          'Move-Item',
+          '-Path',
+          `'${cudaPath}\\${filename}\\lib\\x64\\*'`,
+          '-DestinationPath',
+          `'${cudaPath}\\lib\\x64'`,
+          '-Force',
+          '-ErrorAction',
+          'SilentlyContinue'
+        ]
+        await spawn(command, installArgs, {
+          stdio: 'inherit',
+          shell: true
+        })
       } catch (error) {
         core.error(`Error during install cuDNN lib files: ${error}`)
         throw error
