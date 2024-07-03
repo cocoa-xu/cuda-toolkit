@@ -475,22 +475,22 @@ function installCudnn(cudnnArchivePath, directoryName, cudaPath) {
         }
         // unarchive cudnn to CUDA directory
         try {
-            core.debug(`Unarchiving cudnn files: ${cudnnArchivePath}`);
+            core.info(`Unarchiving cudnn files: ${cudnnArchivePath}`);
             const exitCode = yield (0, child_process_1.spawn)(command, installArgs, {
                 stdio: 'inherit',
                 shell: true
             });
-            core.debug(`exit code: ${exitCode}`);
+            core.info(`exit code: ${exitCode}`);
         }
         catch (error) {
-            core.debug(`Error during installation: ${error}`);
+            core.error(`Error during installation: ${error}`);
             throw error;
         }
         // await io.rmRF(cudnnArchivePath)
         let filename = directoryName;
         filename = filename.substring(0, filename.lastIndexOf(fileExt) - 1);
         // move everything unarchived
-        core.debug(`moving cuDNN shared libraries: ${cudnnArchivePath}`);
+        core.info(`moving cuDNN shared libraries: ${cudaPath}\\${filename}\\bin`);
         const options = { force: true, recursive: true, copySourceDirectory: false };
         switch (yield (0, platform_1.getOs)()) {
             case platform_1.OSType.linux:
@@ -513,11 +513,11 @@ function installCudnn(cudnnArchivePath, directoryName, cudaPath) {
                 break;
             case platform_1.OSType.windows:
                 try {
-                    yield io.cp(`${cudaPath}\\${filename}\\bin`, `${cudaPath}\\bin`, options);
+                    yield io.cp(`${cudaPath}\\${filename}\\bin\\*`, `${cudaPath}\\bin`, options);
                     yield io.rmRF(`${cudaPath}\\${filename}\\bin`);
                 }
                 catch (error) {
-                    core.debug(`Error during install cuDNN shared libraries: ${error}`);
+                    core.error(`Error during install cuDNN shared libraries: ${error}`);
                     throw error;
                 }
                 break;
@@ -525,21 +525,21 @@ function installCudnn(cudnnArchivePath, directoryName, cudaPath) {
         switch (yield (0, platform_1.getOs)()) {
             case platform_1.OSType.windows:
                 try {
-                    core.debug(`moving cuDNN header files: ${cudnnArchivePath}`);
-                    yield io.cp(`${cudaPath}\\${filename}\\include`, `${cudaPath}\\include`, options);
+                    core.info(`moving cuDNN header files: ${cudnnArchivePath}`);
+                    yield io.cp(`${cudaPath}\\${filename}\\include\\*`, `${cudaPath}\\include`, options);
                     yield io.rmRF(`${cudaPath}\\${filename}\\include`);
                 }
                 catch (error) {
-                    core.debug(`Error during install cuDNN header files: ${error}`);
+                    core.error(`Error during install cuDNN header files: ${error}`);
                     throw error;
                 }
                 try {
-                    core.debug(`moving cuDNN lib files: ${cudnnArchivePath}`);
-                    yield io.cp(`${cudaPath}\\${filename}\\lib\\x64`, `${cudaPath}\\lib\\x64`, options);
+                    core.info(`moving cuDNN lib files: ${cudnnArchivePath}`);
+                    yield io.cp(`${cudaPath}\\${filename}\\lib\\x64\\*`, `${cudaPath}\\lib\\x64`, options);
                     yield io.rmRF(`${cudaPath}\\${filename}\\lib\\x64`);
                 }
                 catch (error) {
-                    core.debug(`Error during install cuDNN lib files: ${error}`);
+                    core.error(`Error during install cuDNN lib files: ${error}`);
                     throw error;
                 }
                 break;
