@@ -51,14 +51,14 @@ export async function install(
 
   // Run CUDA installer
   try {
-    core.debug(`Running install executable: ${executablePath}`)
+    core.info(`Running install executable: ${executablePath}: ${installArgs}`)
     const exitCode = await spawn(command, installArgs, {
       stdio: 'inherit',
       shell: true
     })
     core.debug(`Installer exit code: ${exitCode}`)
   } catch (error) {
-    core.debug(`Error during installation: ${error}`)
+    core.error(`Error during installation: ${error}`)
     throw error
   } finally {
     // Always upload installation log regardless of error
