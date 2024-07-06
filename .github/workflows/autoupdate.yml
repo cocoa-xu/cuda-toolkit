@@ -20,7 +20,7 @@ jobs:
           CUDA_VERSION="$(curl -fSL https://developer.nvidia.com/cuda-toolkit-archive | grep -P -oh 'CUDA Toolkit (\d+).(\d+).(\d+)(\s*)</a>' | grep -P -oh '(\d+).(\d+).(\d+)' | sort -nr | head -n1)"
           echo "Latest CUDA version: ${CUDA_VRESION}"
           echo "tag=v${CUDA_VERSION}" >> $GITHUB_OUTPUT
-          grep "${CUDA_VERSION}" src/links/linux-links.ts && echo "exists=true" >> $GITHUB_OUTPUT || echo "exists=false" >> $GITHUB_OUTPUT
+          grep "${CUDA_VERSION}" src/links/linux-x86_64-links.ts && echo "exists=true" >> $GITHUB_OUTPUT || echo "exists=false" >> $GITHUB_OUTPUT
 
       - name: Set Node.js 20.x
         if: steps.cuda-version.outputs.exists == 'false'
@@ -42,6 +42,9 @@ jobs:
           LINUX_X86_64_LOCAL_RUNFILE="$(cat cuda-downloads.json | jq -r '[.data | .releases | .[] | select(.arch=="x86_64" and .os=="Linux" and .format=="runfile" and .installer=="local" and .distro_name=="Ubuntu")] | sort_by(.distro_version) | first | .details' | grep -P -oh 'targetDownloadButtonHref" href="(.*?)"' | grep -P -oh 'https://(.*?).run')"
           echo "Linux x86_64 local runfile: ${LINUX_X86_64_LOCAL_RUNFILE}"
 
+          LINUX_AARCH64_LOCAL_RUNFILE="$(cat cuda-downloads.json | jq -r '[.data | .releases | .[] | select(.arch=="arm64-sbsa" and .os=="Linux" and .format=="runfile" and .installer=="local" and .distro_name=="Ubuntu")] | sort_by(.distro_version) | first | .details' | grep -P -oh 'targetDownloadButtonHref" href="(.*?)"' | grep -P -oh 'https://(.*?).run')"
+          echo "Linux aarch64 local runfile: ${LINUX_AARCH64_LOCAL_RUNFILE}"
+
           WINDOWS_X86_64_LOCAL="$(cat cuda-downloads.json| jq -r '[.data | .releases | .[] | select(.arch=="x86_64" and .os=="Windows" and .installer=="local" and .os_version=="Server2022")] | first | .details' | grep -P -oh 'targetDownloadButtonHref" href="(.*?)"' | grep -P -oh 'https://(.*?).exe')"
           echo "Windows x86_64 local installer: ${WINDOWS_X86_64_LOCAL}"
 
@@ -50,44 +53,57 @@ jobs:
           
           rm -f cuda-downloads.json
 
-          # Update src/links/linux-links.ts
-          LINE="$(grep -n 'this.cudaVersionToURL = new Map' src/links/linux-links.ts | awk -F: '{print $1}')"
-          head -n "${LINE}" src/links/linux-links.ts > new-linux-links.ts
-          cat <<EOF >> new-linux-links.ts
+          # Update src/links/linux-x86_64-links.ts
+          LINE="$(grep -n 'this.cudaVersionToURL = new Map' src/links/linux-x86_64-links.ts | awk -F: '{print $1}')"
+          head -n "${LINE}" src/links/linux-x86_64-links.ts > new-linux-x86_64-links.ts
+          cat <<EOF >> new-linux-x86_64-links.ts
                 [
                   '${CUDA_VERSION}',
                   '${LINUX_X86_64_LOCAL_RUNFILE}'
                 ],
           EOF
           LINE=$((LINE + 1))
-          tail -n "+${LINE}" src/links/linux-links.ts >> new-linux-links.ts
-          mv new-linux-links.ts src/links/linux-links.ts
+          tail -n "+${LINE}" src/links/linux-x86_64-links.ts >> new-linux-x86_64-links.ts
+          mv new-linux-x86_64-links.ts src/links/linux-x86_64-links.ts
 
-          # Update src/links/windows-links.ts (local installer)
-          LINE="$(grep -n 'this.cudaVersionToURL' src/links/windows-links.ts | awk -F: '{print $1}')"
-          head -n "${LINE}" src/links/windows-links.ts > new-windows-links.ts
-          cat <<EOF >> new-windows-links.ts
+          # Update src/links/linux-aarch64-links.ts
+          LINE="$(grep -n 'this.cudaVersionToURL = new Map' src/links/linux-aarch64-links.ts | awk -F: '{print $1}')"
+          head -n "${LINE}" src/links/linux-aarch64-links.ts > new-linux-aarch64-links.ts
+          cat <<EOF >> new-linux-aarch64-links.ts
+                [
+                  '${CUDA_VERSION}',
+                  '${LINUX_X86_64_LOCAL_RUNFILE}'
+                ],
+          EOF
+          LINE=$((LINE + 1))
+          tail -n "+${LINE}" src/links/linux-aarch64-links.ts >> new-linux-aarch64-links.ts
+          mv new-linux-aarch64-links.ts src/links/linux-aarch64-links.ts
+
+          # Update src/links/windows-x86_64-links.ts (local installer)
+          LINE="$(grep -n 'this.cudaVersionToURL' src/links/windows-x86_64-links.ts | awk -F: '{print $1}')"
+          head -n "${LINE}" src/links/windows-x86_64-links.ts > new-windows-x86_64-links.ts
+          cat <<EOF >> new-windows-x86_64-links.ts
                 [
                   '${CUDA_VERSION}',
                   '${WINDOWS_X86_64_LOCAL}'
                 ],
           EOF
           LINE=$((LINE + 1))
-          tail -n "+${LINE}" src/links/windows-links.ts >> new-windows-links.ts
-          mv new-windows-links.ts src/links/windows-links.ts
+          tail -n "+${LINE}" src/links/windows-x86_64-links.ts >> new-windows-x86_64-links.ts
+          mv new-windows-x86_64-links.ts src/links/windows-x86_64-links.ts
 
-          # Update src/links/windows-links.ts (network installer)
-          LINE="$(grep -n 'private cudaVersionToNetworkUrl' src/links/windows-links.ts | awk -F: '{print $1}')"
-          head -n "${LINE}" src/links/windows-links.ts > new-windows-links.ts
-          cat <<EOF >> new-windows-links.ts
+          # Update src/links/windows-x86_64-links.ts (network installer)
+          LINE="$(grep -n 'private cudaVersionToNetworkUrl' src/links/windows-x86_64-links.ts | awk -F: '{print $1}')"
+          head -n "${LINE}" src/links/windows-x86_64-links.ts > new-windows-x86_64-links.ts
+          cat <<EOF >> new-windows-x86_64-links.ts
               [
                 '${CUDA_VERSION}',
                 '${WINDOWS_X86_64_NETWORK}'
               ],
           EOF
           LINE=$((LINE + 1))
-          tail -n "+${LINE}" src/links/windows-links.ts >> new-windows-links.ts
-          mv new-windows-links.ts src/links/windows-links.ts
+          tail -n "+${LINE}" src/links/windows-x86_64-links.ts >> new-windows-x86_64-links.ts
+          mv new-windows-x86_64-links.ts src/links/windows-x86_64-links.ts
 
           python3 update-cudnn.py
 
@@ -95,6 +111,6 @@ jobs:
 
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add src/links/linux-links.ts src/links/windows-links.ts dist/* package.json
+          git add src/links/linux-x86_64-links.ts src/links/linux-aarch64-links.ts src/links/windows-x86_64-links.ts dist/* package.json
           git commit -m "Update CUDA version to ${CUDA_VERSION}"
           git push
