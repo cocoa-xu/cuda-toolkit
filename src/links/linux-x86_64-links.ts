@@ -14,6 +14,10 @@ export class LinuxX8664Links extends AbstractLinks {
     // Map of cuda SemVer version to download URL
     this.cudaVersionToURL = new Map([
       [
+        '12.6.3',
+        'https://developer.download.nvidia.com/compute/cuda/12.6.3/local_installers/cuda_12.6.3_560.35.05_linux.run'
+      ],
+      [
         '12.6.2',
         'https://developer.download.nvidia.com/compute/cuda/12.6.2/local_installers/cuda_12.6.2_560.35.03_linux.run'
       ],
@@ -436,6 +440,32 @@ export class LinuxX8664Links extends AbstractLinks {
           [
             12,
             'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-9.4.0.58_cuda12-archive.tar.xz'
+          ]
+        ])
+      ],
+      [
+        '9.5.0',
+        new Map([
+          [
+            11,
+            'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-9.5.0.50_cuda11-archive.tar.xz'
+          ],
+          [
+            12,
+            'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-9.5.0.50_cuda12-archive.tar.xz'
+          ]
+        ])
+      ],
+      [
+        '9.5.1',
+        new Map([
+          [
+            11,
+            'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-9.5.1.17_cuda11-archive.tar.xz'
+          ],
+          [
+            12,
+            'https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/linux-x86_64/cudnn-linux-x86_64-9.5.1.17_cuda12-archive.tar.xz'
           ]
         ])
       ]
