@@ -154,7 +154,7 @@ async function fromCacheOrDownload(
     if (mirror !== '') {
       const mirrorUrl = new URL(mirror)
       if (toolkit.cuda_url !== undefined) {
-        const cudaUrl = new URL(toolkit.cuda_url.toString())
+        let cudaUrl = new URL(toolkit.cuda_url.toString())
         cudaUrl.protocol = mirrorUrl.protocol
         cudaUrl.host = mirrorUrl.host
         cudaUrl.hostname = mirrorUrl.hostname
@@ -163,12 +163,12 @@ async function fromCacheOrDownload(
         cudaUrl.password = mirrorUrl.password
         // If mirror has a path, append it to the CUDA URL
         if (mirrorUrl.pathname !== '/') {
-          cudaUrl.pathname = `${mirrorUrl.pathname}/${cudaUrl.pathname}`
+          cudaUrl.pathname = `${mirrorUrl.pathname}${cudaUrl.pathname}`
         }
         toolkit.cuda_url = cudaUrl
       }
       if (toolkit.cudnn_url !== undefined) {
-        const cudnnUrl = new URL(toolkit.cudnn_url.toString())
+        let cudnnUrl = new URL(toolkit.cudnn_url.toString())
         cudnnUrl.protocol = mirrorUrl.protocol
         cudnnUrl.host = mirrorUrl.host
         cudnnUrl.hostname = mirrorUrl.hostname
@@ -176,7 +176,7 @@ async function fromCacheOrDownload(
         cudnnUrl.username = mirrorUrl.username
         cudnnUrl.password = mirrorUrl.password
         if (mirrorUrl.pathname !== '/') {
-          cudnnUrl.pathname = `${mirrorUrl.pathname}/${cudnnUrl.pathname}`
+          cudnnUrl.pathname = `${mirrorUrl.pathname}${cudnnUrl.pathname}`
         }
         toolkit.cudnn_url = cudnnUrl
       }
@@ -198,14 +198,15 @@ async function fromCacheOrDownload(
     }
 
     const destFileName = `${toolId}_${version_string}.${fileExtension}`
+    core.info(
+      `Package URL for ${downloadType}=${downloadURL} destFileName=${destFileName}`
+    )
     // Download executable
     const downloadPath: string = await tc.downloadTool(
       downloadURL.toString(),
       destFileName
     )
-    core.info(
-      `Package URL for ${downloadType}=${downloadURL}, destFileName=${destFileName}, downloadPath=${downloadPath}`
-    )
+    core.info(`Downloaded to ${downloadPath}`)
     if (!useGitHubCache) {
       return downloadPath
     }
