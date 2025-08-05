@@ -2643,19 +2643,19 @@ class WindowsLinks extends links_1.AbstractLinks {
         this.cudaVersionToNetworkUrl = new Map([
             [
                 '13.0.0',
-                'https://developer.download.nvidia.com/compute/cuda/12.8.0/network_installers/cuda_13.0.0_windows_network.exe'
+                'https://developer.download.nvidia.com/compute/cuda/13.0.0/network_installers/cuda_13.0.0_windows_network.exe'
             ],
             [
                 '12.9.1',
-                'https://developer.download.nvidia.com/compute/cuda/12.8.0/network_installers/cuda_12.9.1_windows_network.exe'
+                'https://developer.download.nvidia.com/compute/cuda/12.9.1/network_installers/cuda_12.9.1_windows_network.exe'
             ],
             [
                 '12.9.0',
-                'https://developer.download.nvidia.com/compute/cuda/12.8.0/network_installers/cuda_12.9.0_windows_network.exe'
+                'https://developer.download.nvidia.com/compute/cuda/12.9.0/network_installers/cuda_12.9.0_windows_network.exe'
             ],
             [
                 '12.8.1',
-                'https://developer.download.nvidia.com/compute/cuda/12.8.0/network_installers/cuda_12.8.1_windows_network.exe'
+                'https://developer.download.nvidia.com/compute/cuda/12.8.1/network_installers/cuda_12.8.1_windows_network.exe'
             ],
             [
                 '12.8.0',
