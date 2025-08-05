@@ -390,13 +390,32 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.installCudnn = exports.install = void 0;
+exports.installCudnn = exports.install = exports.spawnAsync = void 0;
 const artifact = __importStar(__nccwpck_require__(2605));
 const core = __importStar(__nccwpck_require__(2186));
 const platform_1 = __nccwpck_require__(9238);
 const child_process_1 = __nccwpck_require__(2081);
 const downloader_1 = __nccwpck_require__(5587);
 const fs_1 = __importDefault(__nccwpck_require__(7147));
+function spawnAsync(command, args, options) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return new Promise((resolve, reject) => {
+            const child = (0, child_process_1.spawn)(command, args, options);
+            child.on('close', (code) => {
+                if (code === 0) {
+                    resolve(code);
+                }
+                else {
+                    reject(new Error(`Process exited with code ${code}`));
+                }
+            });
+            child.on('error', (error) => {
+                reject(error);
+            });
+        });
+    });
+}
+exports.spawnAsync = spawnAsync;
 function install(executablePath, toolkit, subPackagesArray, linuxLocalArgsArray) {
     return __awaiter(this, void 0, void 0, function* () {
         // Install arguments, see: https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#runfile-advanced
@@ -433,17 +452,18 @@ function install(executablePath, toolkit, subPackagesArray, linuxLocalArgsArray)
         // Run CUDA installer
         try {
             core.info(`Running install executable: ${executablePath}: ${installArgs}`);
-            const exitCode = yield (0, child_process_1.spawn)(command, installArgs, {
+            const exitCode = yield spawnAsync(command, installArgs, {
                 stdio: 'inherit',
                 shell: true
             });
-            core.debug(`Installer exit code: ${exitCode}`);
+            core.info(`Installer exit code: ${exitCode}`);
         }
         catch (error) {
             core.error(`Error during installation: ${error}`);
             throw error;
         }
         finally {
+            core.info(`Installation finished, cleaning up temporary files.`);
             // Always upload installation log regardless of error
             if ((yield (0, platform_1.getOs)()) === platform_1.OSType.linux) {
                 const artifactClient = artifact.create();
@@ -501,7 +521,7 @@ function installCudnn(cudnnArchivePath, directoryName, cudaPath) {
         // unarchive cudnn to CUDA directory
         try {
             core.info(`Unarchiving cudnn files: ${cudnnArchivePath}`);
-            const exitCode = yield (0, child_process_1.spawn)(command, installArgs, {
+            const exitCode = yield spawnAsync(command, installArgs, {
                 stdio: 'inherit',
                 shell: true
             });
@@ -525,7 +545,7 @@ function installCudnn(cudnnArchivePath, directoryName, cudaPath) {
                     `mv "${cudaPath}/${filename}/lib/*" "${cudaPath}/lib/" && mv "${cudaPath}/${filename}/include/*" "${cudaPath}/include/"`
                 ];
                 try {
-                    const exitCode = yield (0, child_process_1.spawn)(command, installArgs, {
+                    const exitCode = yield spawnAsync(command, installArgs, {
                         stdio: 'inherit',
                         shell: true
                     });
@@ -550,7 +570,7 @@ function installCudnn(cudnnArchivePath, directoryName, cudaPath) {
                         '-ErrorAction',
                         'SilentlyContinue'
                     ];
-                    yield (0, child_process_1.spawn)(command, installArgs, {
+                    yield spawnAsync(command, installArgs, {
                         stdio: 'inherit',
                         shell: true
                     });
@@ -577,7 +597,7 @@ function installCudnn(cudnnArchivePath, directoryName, cudaPath) {
                         '-ErrorAction',
                         'SilentlyContinue'
                     ];
-                    yield (0, child_process_1.spawn)(command, installArgs, {
+                    yield spawnAsync(command, installArgs, {
                         stdio: 'inherit',
                         shell: true
                     });
@@ -600,7 +620,7 @@ function installCudnn(cudnnArchivePath, directoryName, cudaPath) {
                         '-ErrorAction',
                         'SilentlyContinue'
                     ];
-                    yield (0, child_process_1.spawn)(command, installArgs, {
+                    yield spawnAsync(command, installArgs, {
                         stdio: 'inherit',
                         shell: true
                     });
@@ -3600,6 +3620,8 @@ function run() {
             else {
                 // Download
                 const [executablePath, archivePath] = yield (0, downloader_1.download)(cuda_toolkit, methodParsed, arch, useGitHubCache, mirror);
+                core.info(`Executable path: ${executablePath}`);
+                core.info(`Archive path: ${archivePath}`);
                 // Install CUDA
                 yield (0, installer_1.install)(executablePath, cuda_toolkit, subPackagesArray, linuxLocalArgsArray);
                 cudnnArchivePath = archivePath;

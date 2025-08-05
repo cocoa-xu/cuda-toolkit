@@ -5,6 +5,28 @@ import {spawn} from 'child_process'
 import {getFileExtension} from './downloader'
 import fs from 'fs'
 
+export async function spawnAsync(
+  command: string,
+  args: string[],
+  options: any
+): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, options)
+
+    child.on('close', code => {
+      if (code === 0) {
+        resolve(code)
+      } else {
+        reject(new Error(`Process exited with code ${code}`))
+      }
+    })
+
+    child.on('error', error => {
+      reject(error)
+    })
+  })
+}
+
 export async function install(
   executablePath: string,
   toolkit: CUDAToolkit,
@@ -51,15 +73,16 @@ export async function install(
   // Run CUDA installer
   try {
     core.info(`Running install executable: ${executablePath}: ${installArgs}`)
-    const exitCode = await spawn(command, installArgs, {
+    const exitCode = await spawnAsync(command, installArgs, {
       stdio: 'inherit',
       shell: true
     })
-    core.debug(`Installer exit code: ${exitCode}`)
+    core.info(`Installer exit code: ${exitCode}`)
   } catch (error) {
     core.error(`Error during installation: ${error}`)
     throw error
   } finally {
+    core.info(`Installation finished, cleaning up temporary files.`)
     // Always upload installation log regardless of error
     if ((await getOs()) === OSType.linux) {
       const artifactClient = artifact.create()
@@ -126,7 +149,7 @@ export async function installCudnn(
   // unarchive cudnn to CUDA directory
   try {
     core.info(`Unarchiving cudnn files: ${cudnnArchivePath}`)
-    const exitCode = await spawn(command, installArgs, {
+    const exitCode = await spawnAsync(command, installArgs, {
       stdio: 'inherit',
       shell: true
     })
@@ -151,7 +174,7 @@ export async function installCudnn(
         `mv "${cudaPath}/${filename}/lib/*" "${cudaPath}/lib/" && mv "${cudaPath}/${filename}/include/*" "${cudaPath}/include/"`
       ]
       try {
-        const exitCode = await spawn(command, installArgs, {
+        const exitCode = await spawnAsync(command, installArgs, {
           stdio: 'inherit',
           shell: true
         })
@@ -175,7 +198,7 @@ export async function installCudnn(
           '-ErrorAction',
           'SilentlyContinue'
         ]
-        await spawn(command, installArgs, {
+        await spawnAsync(command, installArgs, {
           stdio: 'inherit',
           shell: true
         })
@@ -204,7 +227,7 @@ export async function installCudnn(
           '-ErrorAction',
           'SilentlyContinue'
         ]
-        await spawn(command, installArgs, {
+        await spawnAsync(command, installArgs, {
           stdio: 'inherit',
           shell: true
         })
@@ -229,7 +252,7 @@ export async function installCudnn(
           '-ErrorAction',
           'SilentlyContinue'
         ]
-        await spawn(command, installArgs, {
+        await spawnAsync(command, installArgs, {
           stdio: 'inherit',
           shell: true
         })

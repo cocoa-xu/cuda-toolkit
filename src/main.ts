@@ -90,6 +90,9 @@ async function run(): Promise<void> {
       const [executablePath, archivePath]: [string, string | undefined] =
         await download(cuda_toolkit, methodParsed, arch, useGitHubCache, mirror)
 
+      core.info(`Executable path: ${executablePath}`)
+      core.info(`Archive path: ${archivePath}`)
+
       // Install CUDA
       await install(
         executablePath,
