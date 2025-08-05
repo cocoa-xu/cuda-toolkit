@@ -186,7 +186,8 @@ function download(toolkit, method, arch, useGitHubCache, mirror) {
         }
         // String with full executable path
         const fullExecutablePath = yield verifyCachePath(executablePath, '0755');
-        return [fullExecutablePath, cudnnArchivePath];
+        const fullCudnnArchivePath = yield verifyCachePath(cudnnArchivePath, undefined);
+        return [fullExecutablePath, fullCudnnArchivePath];
     });
 }
 exports.download = download;
@@ -212,6 +213,9 @@ function getFileExtension(osType, downloadType) {
 exports.getFileExtension = getFileExtension;
 function verifyCachePath(verifyPath, chmod) {
     return __awaiter(this, void 0, void 0, function* () {
+        if (verifyPath === undefined || verifyPath === '') {
+            return '';
+        }
         // String with full executable path
         let fullExecutablePath;
         // Get list of files in tool cache
@@ -401,7 +405,7 @@ function spawnAsync(command, args, options) {
     return __awaiter(this, void 0, void 0, function* () {
         return new Promise((resolve, reject) => {
             const child = (0, child_process_1.spawn)(command, args, options);
-            child.on('close', (code) => {
+            child.on('close', code => {
                 if (code === 0) {
                     resolve(code);
                 }
@@ -409,7 +413,7 @@ function spawnAsync(command, args, options) {
                     reject(new Error(`Process exited with code ${code}`));
                 }
             });
-            child.on('error', (error) => {
+            child.on('error', error => {
                 reject(error);
             });
         });
@@ -3609,7 +3613,7 @@ function run() {
             }
             // Linux network install (uses apt repository)
             const useAptInstall = yield (0, apt_installer_1.useApt)(methodParsed);
-            let cudnnArchivePath;
+            let cudnnArchivePath = '';
             if (useAptInstall) {
                 // Setup aptitude repos
                 yield (0, apt_installer_1.aptSetup)(cuda_toolkit.cuda_version);
@@ -3622,6 +3626,9 @@ function run() {
                 const [executablePath, archivePath] = yield (0, downloader_1.download)(cuda_toolkit, methodParsed, arch, useGitHubCache, mirror);
                 core.info(`Executable path: ${executablePath}`);
                 core.info(`Archive path: ${archivePath}`);
+                if (executablePath === '') {
+                    throw new Error(`Executable path is empty, check if the toolkit version ${cuda_toolkit.cuda_version} is available for the specified method ${methodParsed} and arch ${arch}`);
+                }
                 // Install CUDA
                 yield (0, installer_1.install)(executablePath, cuda_toolkit, subPackagesArray, linuxLocalArgsArray);
                 cudnnArchivePath = archivePath;
@@ -3631,7 +3638,7 @@ function run() {
             // Set output variables
             core.setOutput('cuda', cuda);
             core.setOutput('CUDA_PATH', cudaPath);
-            if (cudnnArchivePath !== undefined &&
+            if (cudnnArchivePath !== '' &&
                 ((_a = cuda_toolkit.cudnn_url) === null || _a === void 0 ? void 0 : _a.pathname) !== undefined) {
                 let directoryName;
                 if (cudnn_archive_dir.length > 0) {

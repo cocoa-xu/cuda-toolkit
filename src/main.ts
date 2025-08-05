@@ -75,7 +75,7 @@ async function run(): Promise<void> {
 
     // Linux network install (uses apt repository)
     const useAptInstall = await useApt(methodParsed)
-    let cudnnArchivePath: string | undefined
+    let cudnnArchivePath: string = ''
     if (useAptInstall) {
       // Setup aptitude repos
       await aptSetup(cuda_toolkit.cuda_version)
@@ -87,11 +87,22 @@ async function run(): Promise<void> {
       core.debug(`Install result: ${installResult}`)
     } else {
       // Download
-      const [executablePath, archivePath]: [string, string | undefined] =
-        await download(cuda_toolkit, methodParsed, arch, useGitHubCache, mirror)
+      const [executablePath, archivePath]: [string, string] = await download(
+        cuda_toolkit,
+        methodParsed,
+        arch,
+        useGitHubCache,
+        mirror
+      )
 
       core.info(`Executable path: ${executablePath}`)
       core.info(`Archive path: ${archivePath}`)
+
+      if (executablePath === '') {
+        throw new Error(
+          `Executable path is empty, check if the toolkit version ${cuda_toolkit.cuda_version} is available for the specified method ${methodParsed} and arch ${arch}`
+        )
+      }
 
       // Install CUDA
       await install(
@@ -112,7 +123,7 @@ async function run(): Promise<void> {
     core.setOutput('CUDA_PATH', cudaPath)
 
     if (
-      cudnnArchivePath !== undefined &&
+      cudnnArchivePath !== '' &&
       cuda_toolkit.cudnn_url?.pathname !== undefined
     ) {
       let directoryName: string

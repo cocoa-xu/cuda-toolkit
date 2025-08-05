@@ -17,7 +17,7 @@ export async function download(
   arch: string,
   useGitHubCache: boolean,
   mirror: string
-): Promise<[string, string | undefined]> {
+): Promise<[string, string]> {
   // First try to find tool with desired version in tool cache (local to machine)
   const toolName = 'cuda_installer'
   const cudnnToolName = 'cudnn_archive'
@@ -69,7 +69,11 @@ export async function download(
 
   // String with full executable path
   const fullExecutablePath = await verifyCachePath(executablePath, '0755')
-  return [fullExecutablePath, cudnnArchivePath]
+  const fullCudnnArchivePath = await verifyCachePath(
+    cudnnArchivePath,
+    undefined
+  )
+  return [fullExecutablePath, fullCudnnArchivePath]
 }
 
 export function getFileExtension(
@@ -97,9 +101,12 @@ export function getFileExtension(
 }
 
 async function verifyCachePath(
-  verifyPath: string,
+  verifyPath: string | undefined,
   chmod: string | undefined
 ): Promise<string> {
+  if (verifyPath === undefined || verifyPath === '') {
+    return ''
+  }
   // String with full executable path
   let fullExecutablePath: string
   // Get list of files in tool cache
