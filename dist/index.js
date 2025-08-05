@@ -254,8 +254,8 @@ function fromCacheOrDownload(toolName, toolkit, method, cacheKey, useGitHubCache
             // Get download URL
             toolkit = yield getDownloadURL(method, arch, toolkit);
             if (mirror !== '') {
-                const mirrorUrl = new URL(mirror);
                 if (toolkit.cuda_url !== undefined) {
+                    const mirrorUrl = new URL(mirror);
                     let cudaUrl = new URL(toolkit.cuda_url.toString());
                     cudaUrl.protocol = mirrorUrl.protocol;
                     cudaUrl.host = mirrorUrl.host;
@@ -270,6 +270,7 @@ function fromCacheOrDownload(toolName, toolkit, method, cacheKey, useGitHubCache
                     toolkit.cuda_url = cudaUrl;
                 }
                 if (toolkit.cudnn_url !== undefined) {
+                    const mirrorUrl = new URL(mirror);
                     let cudnnUrl = new URL(toolkit.cudnn_url.toString());
                     cudnnUrl.protocol = mirrorUrl.protocol;
                     cudnnUrl.host = mirrorUrl.host;
