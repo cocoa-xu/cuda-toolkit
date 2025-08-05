@@ -15,6 +15,8 @@ async function run(): Promise<void> {
     core.debug(`Desired cuda version: ${cuda}`)
     const cudnn: string = core.getInput('cudnn')
     core.debug(`Desired cudnn version: ${cudnn}`)
+    const mirror: string = core.getInput('mirror')
+    core.debug(`Desired mirror base: ${mirror}`)
     let arch: string = core.getInput('arch')
     if (arch === '') {
       arch = os.arch()
@@ -23,7 +25,7 @@ async function run(): Promise<void> {
     const cudnn_archive_dir: string = core.getInput('cudnn_archive_dir')
     core.debug(`Desired cuDNN archive dir: ${cudnn_archive_dir}`)
     const subPackages: string = core.getInput('sub-packages')
-    core.debug(`Desired subPackes: ${subPackages}`)
+    core.debug(`Desired subPackages: ${subPackages}`)
     const methodString: string = core.getInput('method')
     core.debug(`Desired method: ${methodString}`)
     const linuxLocalArgs: string = core.getInput('linux-local-args')
@@ -86,7 +88,7 @@ async function run(): Promise<void> {
     } else {
       // Download
       const [executablePath, archivePath]: [string, string | undefined] =
-        await download(cuda_toolkit, methodParsed, arch, useGitHubCache)
+        await download(cuda_toolkit, methodParsed, arch, useGitHubCache, mirror)
 
       // Install CUDA
       await install(

@@ -10,6 +10,10 @@ inputs:
     description: 'cuDNN version'
     required: false
     default: ''
+  mirror:
+    description: 'Custom mirror'
+    required: false
+    default: ''
   arch:
     description: 'Platform arch'
     required: false

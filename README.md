@@ -8,11 +8,17 @@ This action installs the [NVIDIA® CUDA® Toolkit](https://developer.nvidia.com/
 
 **Optional** The CUDA version to install. View `src/link/windows-links.ts` and `src/link/linux-links.ts` for available versions.
 
-Default: `'12.5.0'`.
+Default: `'12.9.1'`.
 
 ### `cudnn`
 
 **Optional** The cudnn version. cudnn archive file is downloaded from the official [NVIDIA cuDNN Archive](https://developer.download.nvidia.com/compute/cudnn/redist/cudnn) and extracted to the CUDA install location. The extracted files are added to `GITHUB_PATH` so you can use cudnn in subsequent steps.
+
+Default: `''`.
+
+### `mirror`
+
+**Optional** The URL of the mirror to use for downloading the CUDA and cuDNN installers. If not set, the action will use the default NVIDIA download URLs.
 
 Default: `''`.
 

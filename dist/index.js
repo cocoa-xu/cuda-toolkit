@@ -157,7 +157,7 @@ const windows_x86_64_links_1 = __nccwpck_require__(4892);
 const fs_1 = __importDefault(__nccwpck_require__(7147));
 const get_links_1 = __nccwpck_require__(1451);
 // Download helper which returns the installer executable and caches it for next runs
-function download(toolkit, method, arch, useGitHubCache) {
+function download(toolkit, method, arch, useGitHubCache, mirror) {
     return __awaiter(this, void 0, void 0, function* () {
         // First try to find tool with desired version in tool cache (local to machine)
         const toolName = 'cuda_installer';
@@ -178,10 +178,10 @@ function download(toolkit, method, arch, useGitHubCache) {
         else {
             // Second option, get tool from GitHub cache if enabled
             const cacheKey = `${toolId}-${toolkit.cuda_version}`;
-            executablePath = yield fromCacheOrDownload(toolName, toolkit, method, cacheKey, useGitHubCache, osType, arch, toolId, platform_1.DownloadType.cuda);
+            executablePath = yield fromCacheOrDownload(toolName, toolkit, method, cacheKey, useGitHubCache, mirror, osType, arch, toolId, platform_1.DownloadType.cuda);
         }
         if (toolkit.cudnn_version !== undefined) {
-            cudnnArchivePath = yield fromCacheOrDownload(cudnnToolName, toolkit, method, '', false, osType, arch, cudnnToolId, platform_1.DownloadType.cudnn);
+            cudnnArchivePath = yield fromCacheOrDownload(cudnnToolName, toolkit, method, '', false, mirror, osType, arch, cudnnToolId, platform_1.DownloadType.cudnn);
         }
         // String with full executable path
         const fullExecutablePath = yield verifyCachePath(executablePath, '0755');
@@ -236,7 +236,7 @@ function verifyCachePath(verifyPath, chmod) {
         return fullExecutablePath;
     });
 }
-function fromCacheOrDownload(toolName, toolkit, method, cacheKey, useGitHubCache, osType, arch, toolId, downloadType) {
+function fromCacheOrDownload(toolName, toolkit, method, cacheKey, useGitHubCache, mirror, osType, arch, toolId, downloadType) {
     return __awaiter(this, void 0, void 0, function* () {
         const cachePath = cacheKey;
         let cacheResult;
@@ -253,6 +253,40 @@ function fromCacheOrDownload(toolName, toolkit, method, cacheKey, useGitHubCache
             core.debug(`Not found in local/GitHub cache, downloading...`);
             // Get download URL
             toolkit = yield getDownloadURL(method, arch, toolkit);
+            if (mirror !== '') {
+                const mirrorUrl = new URL(mirror);
+                if (toolkit.cuda_url !== undefined) {
+                    const cudaUrl = new URL(toolkit.cuda_url.toString());
+                    cudaUrl.protocol = mirrorUrl.protocol;
+                    cudaUrl.host = mirrorUrl.host;
+                    cudaUrl.hostname = mirrorUrl.hostname;
+                    cudaUrl.port = mirrorUrl.port;
+                    cudaUrl.username = mirrorUrl.username;
+                    cudaUrl.password = mirrorUrl.password;
+                    // If mirror has a path, append it to the CUDA URL
+                    if (mirrorUrl.pathname !== '/') {
+                        cudaUrl.pathname = `${mirrorUrl.pathname}/${cudaUrl.pathname}`;
+                    }
+                    toolkit.cuda_url = cudaUrl;
+                }
+                if (toolkit.cudnn_url !== undefined) {
+                    const cudnnUrl = new URL(toolkit.cudnn_url.toString());
+                    cudnnUrl.protocol = mirrorUrl.protocol;
+                    cudnnUrl.host = mirrorUrl.host;
+                    cudnnUrl.hostname = mirrorUrl.hostname;
+                    cudnnUrl.port = mirrorUrl.port;
+                    cudnnUrl.username = mirrorUrl.username;
+                    cudnnUrl.password = mirrorUrl.password;
+                    if (mirrorUrl.pathname !== '/') {
+                        cudnnUrl.pathname = `${mirrorUrl.pathname}/${cudnnUrl.pathname}`;
+                    }
+                    toolkit.cudnn_url = cudnnUrl;
+                }
+                core.debug(`Using custom mirror: ${mirror}`);
+            }
+            else {
+                core.debug(`Using default URLs from NVIDIA servers`);
+            }
             // Get CUDA/cudnn installer filename extension depending on OS
             const fileExtension = getFileExtension(osType, downloadType);
             const version_string = downloadType === platform_1.DownloadType.cuda
@@ -3501,6 +3535,8 @@ function run() {
             core.debug(`Desired cuda version: ${cuda}`);
             const cudnn = core.getInput('cudnn');
             core.debug(`Desired cudnn version: ${cudnn}`);
+            const mirror = core.getInput('mirror');
+            core.debug(`Desired mirror base: ${mirror}`);
             let arch = core.getInput('arch');
             if (arch === '') {
                 arch = os_1.default.arch();
@@ -3509,7 +3545,7 @@ function run() {
             const cudnn_archive_dir = core.getInput('cudnn_archive_dir');
             core.debug(`Desired cuDNN archive dir: ${cudnn_archive_dir}`);
             const subPackages = core.getInput('sub-packages');
-            core.debug(`Desired subPackes: ${subPackages}`);
+            core.debug(`Desired subPackages: ${subPackages}`);
             const methodString = core.getInput('method');
             core.debug(`Desired method: ${methodString}`);
             const linuxLocalArgs = core.getInput('linux-local-args');
@@ -3561,7 +3597,7 @@ function run() {
             }
             else {
                 // Download
-                const [executablePath, archivePath] = yield (0, downloader_1.download)(cuda_toolkit, methodParsed, arch, useGitHubCache);
+                const [executablePath, archivePath] = yield (0, downloader_1.download)(cuda_toolkit, methodParsed, arch, useGitHubCache, mirror);
                 // Install CUDA
                 yield (0, installer_1.install)(executablePath, cuda_toolkit, subPackagesArray, linuxLocalArgsArray);
                 cudnnArchivePath = archivePath;
