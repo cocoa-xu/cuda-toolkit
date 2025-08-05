@@ -10,7 +10,8 @@
     "lint": "eslint src/**/*.ts __tests__/**/*.ts",
     "package": "ncc build --source-map --license licenses.txt",
     "test": "jest",
-    "all": "npm run build && npm run format && npm run lint && npm run package && npm test"
+    "all": "npm run build && npm run format && npm run lint && npm run package && npm test",
+    "mirror-cli": "ts-node src/mirror-cli.ts"
   },
   "repository": {
     "type": "git",
@@ -36,9 +37,11 @@
     "@actions/tool-cache": "^2.0.1",
     "@types/semver": "^7.3.12",
     "@typescript-eslint/typescript-estree": "^7.2.0",
+    "cli-progress": "^3.12.0",
     "semver": "^7.3.7"
   },
   "devDependencies": {
+    "@types/cli-progress": "^3.11.6",
     "@types/jest": "^28.1.6",
     "@types/node": "^18.11.9",
     "@typescript-eslint/parser": "^5.35.1",
@@ -53,6 +56,7 @@
     "js-yaml": "^4.1.0",
     "prettier": "2.7.1",
     "ts-jest": "^28.0.8",
+    "ts-node": "^10.9.1",
     "typescript": "^4.9.4"
   }
 }
