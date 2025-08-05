@@ -214,9 +214,6 @@ async function fromCacheOrDownload(
       destFileName
     )
     core.info(`Downloaded to ${downloadPath}`)
-    if (!useGitHubCache) {
-      return downloadPath
-    }
 
     // Copy file to GitHub cachePath
     core.debug(`Copying ${destFileName} to ${cachePath}`)

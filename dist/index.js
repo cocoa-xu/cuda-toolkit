@@ -254,7 +254,8 @@ function fromCacheOrDownload(toolName, toolkit, method, cacheKey, useGitHubCache
             // Get download URL
             toolkit = yield getDownloadURL(method, arch, toolkit);
             if (mirror !== '') {
-                if (downloadType === platform_1.DownloadType.cuda && toolkit.cuda_url !== undefined) {
+                if (downloadType === platform_1.DownloadType.cuda &&
+                    toolkit.cuda_url !== undefined) {
                     const mirrorUrl = new URL(mirror);
                     let cudaUrl = new URL(toolkit.cuda_url.toString());
                     cudaUrl.protocol = mirrorUrl.protocol;
@@ -269,7 +270,8 @@ function fromCacheOrDownload(toolName, toolkit, method, cacheKey, useGitHubCache
                     }
                     toolkit.cuda_url = cudaUrl;
                 }
-                if (downloadType === platform_1.DownloadType.cudnn && toolkit.cudnn_url !== undefined) {
+                if (downloadType === platform_1.DownloadType.cudnn &&
+                    toolkit.cudnn_url !== undefined) {
                     const mirrorUrl = new URL(mirror);
                     let cudnnUrl = new URL(toolkit.cudnn_url.toString());
                     cudnnUrl.protocol = mirrorUrl.protocol;
@@ -302,9 +304,6 @@ function fromCacheOrDownload(toolName, toolkit, method, cacheKey, useGitHubCache
             // Download executable
             const downloadPath = yield tc.downloadTool(downloadURL.toString(), destFileName);
             core.info(`Downloaded to ${downloadPath}`);
-            if (!useGitHubCache) {
-                return downloadPath;
-            }
             // Copy file to GitHub cachePath
             core.debug(`Copying ${destFileName} to ${cachePath}`);
             yield io.mkdirP(cachePath);
