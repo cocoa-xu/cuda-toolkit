@@ -181,7 +181,8 @@ function download(toolkit, method, arch, useGitHubCache, mirror) {
             executablePath = yield fromCacheOrDownload(toolName, toolkit, method, cacheKey, useGitHubCache, mirror, osType, arch, toolId, platform_1.DownloadType.cuda);
         }
         if (toolkit.cudnn_version !== undefined) {
-            cudnnArchivePath = yield fromCacheOrDownload(cudnnToolName, toolkit, method, '', false, mirror, osType, arch, cudnnToolId, platform_1.DownloadType.cudnn);
+            const cacheKey = `${cudnnToolId}-${toolkit.cudnn_version}`;
+            cudnnArchivePath = yield fromCacheOrDownload(cudnnToolName, toolkit, method, cacheKey, useGitHubCache, mirror, osType, arch, cudnnToolId, platform_1.DownloadType.cudnn);
         }
         // String with full executable path
         const fullExecutablePath = yield verifyCachePath(executablePath, '0755');
@@ -305,7 +306,7 @@ function fromCacheOrDownload(toolName, toolkit, method, cacheKey, useGitHubCache
             const downloadPath = yield tc.downloadTool(downloadURL.toString(), destFileName);
             core.info(`Downloaded to ${downloadPath}`);
             // Copy file to GitHub cachePath
-            core.debug(`Copying ${destFileName} to ${cachePath}`);
+            core.info(`Copying ${destFileName} to ${cachePath}`);
             yield io.mkdirP(cachePath);
             yield io.cp(destFileName, cachePath);
             // Cache download to local machine cache

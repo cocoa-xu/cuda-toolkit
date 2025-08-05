@@ -52,12 +52,13 @@ export async function download(
   }
 
   if (toolkit.cudnn_version !== undefined) {
+    const cacheKey = `${cudnnToolId}-${toolkit.cudnn_version}`
     cudnnArchivePath = await fromCacheOrDownload(
       cudnnToolName,
       toolkit,
       method,
-      '',
-      false,
+      cacheKey,
+      useGitHubCache,
       mirror,
       osType,
       arch,
@@ -216,7 +217,7 @@ async function fromCacheOrDownload(
     core.info(`Downloaded to ${downloadPath}`)
 
     // Copy file to GitHub cachePath
-    core.debug(`Copying ${destFileName} to ${cachePath}`)
+    core.info(`Copying ${destFileName} to ${cachePath}`)
     await io.mkdirP(cachePath)
     await io.cp(destFileName, cachePath)
     // Cache download to local machine cache
