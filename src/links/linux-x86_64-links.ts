@@ -14,8 +14,44 @@ export class LinuxX8664Links extends AbstractLinks {
     // Map of cuda SemVer version to download URL
     this.cudaVersionToURL = new Map([
       [
+        '13.3.0',
+        'https://developer.download.nvidia.com/compute/cuda/13.3.0/local_installers/cuda_13.3.0_610.43.02_linux.run'
+      ],
+      [
+        '13.2.1',
+        'https://developer.download.nvidia.com/compute/cuda/13.2.1/local_installers/cuda_13.2.1_595.58.03_linux.run'
+      ],
+      [
+        '13.2.0',
+        'https://developer.download.nvidia.com/compute/cuda/13.2.0/local_installers/cuda_13.2.0_595.45.04_linux.run'
+      ],
+      [
+        '13.1.2',
+        'https://developer.download.nvidia.com/compute/cuda/13.1.2/local_installers/cuda_13.1.2_590.48.01_linux.run'
+      ],
+      [
+        '13.1.1',
+        'https://developer.download.nvidia.com/compute/cuda/13.1.1/local_installers/cuda_13.1.1_590.48.01_linux.run'
+      ],
+      [
+        '13.0.3',
+        'https://developer.download.nvidia.com/compute/cuda/13.0.3/local_installers/cuda_13.0.3_580.126.20_linux.run'
+      ],
+      [
+        '13.0.2',
+        'https://developer.download.nvidia.com/compute/cuda/13.0.2/local_installers/cuda_13.0.2_580.95.05_linux.run'
+      ],
+      [
+        '13.0.1',
+        'https://developer.download.nvidia.com/compute/cuda/13.0.1/local_installers/cuda_13.0.1_580.82.07_linux.run'
+      ],
+      [
         '13.0.0',
         'https://developer.download.nvidia.com/compute/cuda/13.0.0/local_installers/cuda_13.0.0_580.65.06_linux.run'
+      ],
+      [
+        '12.9.2',
+        'https://developer.download.nvidia.com/compute/cuda/12.9.2/local_installers/cuda_12.9.2_575.57.08_linux.run'
       ],
       [
         '12.9.1',
