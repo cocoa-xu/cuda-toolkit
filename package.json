@@ -1,6 +1,6 @@
 {
   "name": "cuda-toolkit",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "description": "GitHub Action to install the NVIDIA CUDA Toolkit",
   "main": "lib/main.js",
   "scripts": {
@@ -11,7 +11,8 @@
     "package": "ncc build --source-map --license licenses.txt",
     "test": "jest",
     "all": "npm run build && npm run format && npm run lint && npm run package && npm test",
-    "mirror-cli": "ts-node src/mirror-cli.ts"
+    "mirror-cli": "ts-node src/mirror-cli.ts",
+    "update-cudnn": "node update-cudnn.js"
   },
   "repository": {
     "type": "git",
