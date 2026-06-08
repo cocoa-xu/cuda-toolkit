@@ -1,9 +1,7 @@
 import * as artifact from '@actions/artifact'
 import * as core from '@actions/core'
-import {OSType, getOs, CUDAToolkit, DownloadType} from './platform'
+import {OSType, getOs, CUDAToolkit} from './platform'
 import {spawn} from 'child_process'
-import {getFileExtension} from './downloader'
-import {logDiskSpace} from './disk-space'
 import fs from 'fs'
 
 export async function spawnAsync(
@@ -109,160 +107,46 @@ export async function install(
 
 export async function installCudnn(
   cudnnArchivePath: string,
-  directoryName: string,
   cudaPath: string
 ): Promise<void> {
-  let installArgs: string[]
   let command: string
-  let fileExt: string
-  const execOptions = {
-    listeners: {
-      stdout: (data: Buffer) => {
-        core.debug(data.toString())
-      },
-      stderr: (data: Buffer) => {
-        core.debug(`Error: ${data.toString()}`)
-      }
-    }
-  }
+  let installArgs: string[]
 
+  // Strip the archive's top-level directory so cuDNN's bin/include/lib are
+  // merged into the existing CUDA toolkit at cudaPath.
   switch (await getOs()) {
     case OSType.linux:
-      command = `sudo tar`
-      installArgs = ['-xf', cudnnArchivePath, '-C', cudaPath]
-      fileExt = getFileExtension(OSType.linux, DownloadType.cudnn)
+      command = 'sudo'
+      installArgs = [
+        'tar',
+        '-xf',
+        cudnnArchivePath,
+        '--strip-components=1',
+        '-C',
+        cudaPath
+      ]
       break
     case OSType.windows:
-      command = 'powershell'
+      command = 'tar'
       installArgs = [
-        '-command',
-        'Expand-Archive',
-        '-LiteralPath',
-        `'${cudnnArchivePath}'`,
-        '-Destination',
-        `'${cudaPath}'`,
-        '-force'
+        '-xf',
+        `"${cudnnArchivePath}"`,
+        '--strip-components=1',
+        '-C',
+        `"${cudaPath}"`
       ]
-      fileExt = getFileExtension(OSType.windows, DownloadType.cudnn)
       break
   }
 
-  // unarchive cudnn to CUDA directory
   try {
-    core.info(`Unarchiving cudnn files: ${cudnnArchivePath}`)
+    core.info(`Unarchiving cuDNN into ${cudaPath}`)
     const exitCode = await spawnAsync(command, installArgs, {
       stdio: 'inherit',
       shell: true
     })
     core.info(`exit code: ${exitCode}`)
   } catch (error) {
-    core.error(`Error during installation: ${error}`)
+    core.error(`Error during cuDNN installation: ${error}`)
     throw error
-  }
-
-  await logDiskSpace('after cuDNN unarchive')
-
-  // await io.rmRF(cudnnArchivePath)
-
-  let filename: string = directoryName
-  filename = filename.substring(0, filename.lastIndexOf(fileExt) - 1)
-  // move everything unarchived
-  core.info(`moving cuDNN shared libraries: ${cudaPath}\\${filename}\\bin`)
-  const options = {force: true, recursive: true, copySourceDirectory: false}
-  switch (await getOs()) {
-    case OSType.linux:
-      command = `sudo bash`
-      installArgs = [
-        '-c',
-        `mv "${cudaPath}/${filename}/lib/*" "${cudaPath}/lib/" && mv "${cudaPath}/${filename}/include/*" "${cudaPath}/include/"`
-      ]
-      try {
-        const exitCode = await spawnAsync(command, installArgs, {
-          stdio: 'inherit',
-          shell: true
-        })
-        core.debug(`exit code: ${exitCode}`)
-      } catch (error) {
-        core.debug(`Error during install cuDNN shared libraries: ${error}`)
-        throw error
-      }
-      break
-    case OSType.windows:
-      try {
-        command = 'powershell'
-        installArgs = [
-          '-command',
-          'Move-Item',
-          '-Path',
-          `"'${cudaPath}\\${filename}\\bin\\*'"`,
-          '-Destination',
-          `"'${cudaPath}\\bin\\'"`,
-          '-Force',
-          '-ErrorAction',
-          'SilentlyContinue'
-        ]
-        await spawnAsync(command, installArgs, {
-          stdio: 'inherit',
-          shell: true
-        })
-      } catch (error) {
-        core.error(`Error during install cuDNN shared libraries: ${error}`)
-        throw error
-      }
-      break
-  }
-
-  switch (await getOs()) {
-    case OSType.windows:
-      try {
-        core.info(
-          `moving cuDNN header files: ${cudaPath}\\${filename}\\include\\*`
-        )
-        command = 'powershell'
-        installArgs = [
-          '-command',
-          'Move-Item',
-          '-Path',
-          `"'${cudaPath}\\${filename}\\include\\*'"`,
-          '-Destination',
-          `"'${cudaPath}\\include\\'"`,
-          '-Force',
-          '-ErrorAction',
-          'SilentlyContinue'
-        ]
-        await spawnAsync(command, installArgs, {
-          stdio: 'inherit',
-          shell: true
-        })
-      } catch (error) {
-        core.error(`Error during install cuDNN header files: ${error}`)
-        throw error
-      }
-
-      try {
-        core.info(
-          `moving cuDNN lib files: ${cudaPath}\\${filename}\\lib\\x64\\*`
-        )
-        command = 'powershell'
-        installArgs = [
-          '-command',
-          'Move-Item',
-          '-Path',
-          `"'${cudaPath}\\${filename}\\lib\\x64\\*'"`,
-          '-Destination',
-          `"'${cudaPath}\\lib\\x64\\'"`,
-          '-Force',
-          '-ErrorAction',
-          'SilentlyContinue'
-        ]
-        await spawnAsync(command, installArgs, {
-          stdio: 'inherit',
-          shell: true
-        })
-      } catch (error) {
-        core.error(`Error during install cuDNN lib files: ${error}`)
-        throw error
-      }
-      break
   }
 }

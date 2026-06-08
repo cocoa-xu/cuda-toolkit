@@ -7,7 +7,6 @@ import {logDiskSpace} from './disk-space'
 import {getVersion} from './version'
 import {install, installCudnn} from './installer'
 import {updatePath} from './update-path'
-import path from 'path'
 import os from 'os'
 
 async function run(): Promise<void> {
@@ -23,8 +22,6 @@ async function run(): Promise<void> {
       arch = os.arch()
     }
     core.debug(`Desired arch: ${arch}`)
-    const cudnn_archive_dir: string = core.getInput('cudnn_archive_dir')
-    core.debug(`Desired cuDNN archive dir: ${cudnn_archive_dir}`)
     const subPackages: string = core.getInput('sub-packages')
     core.debug(`Desired subPackages: ${subPackages}`)
     const methodString: string = core.getInput('method')
@@ -131,13 +128,7 @@ async function run(): Promise<void> {
       cudnnArchivePath !== '' &&
       cuda_toolkit.cudnn_url?.pathname !== undefined
     ) {
-      let directoryName: string
-      if (cudnn_archive_dir.length > 0) {
-        directoryName = cudnn_archive_dir
-      } else {
-        directoryName = path.basename(cuda_toolkit.cudnn_url?.pathname)
-      }
-      await installCudnn(cudnnArchivePath, directoryName, cudaPath)
+      await installCudnn(cudnnArchivePath, cudaPath)
       await logDiskSpace('after cuDNN installation')
     }
   } catch (error) {

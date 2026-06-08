@@ -19,7 +19,7 @@ inputs:
     required: false
     default: ''
   cudnn_archive_dir:
-    description: 'name of the unarchived cuDNN directory'
+    description: 'deprecated and ignored; cuDNN is extracted directly into the CUDA toolkit'
     required: false
     default: ''
   sub-packages:
