@@ -59,23 +59,15 @@ function aptSetup(version) {
         core.debug(`Setup packages for ${version}`);
         const ubuntuVersion = yield (0, run_command_1.execReturnOutput)('lsb_release', ['-sr']);
         const ubuntuVersionNoDot = ubuntuVersion.replace('.', '');
-        const pinFilename = `cuda-ubuntu${ubuntuVersionNoDot}.pin`;
         const arch = `x86_64`;
-        const pinUrl = `https://developer.download.nvidia.com/compute/cuda/repos/ubuntu${ubuntuVersionNoDot}/${arch}/${pinFilename}`;
-        const repoUrl = `http://developer.download.nvidia.com/compute/cuda/repos/ubuntu${ubuntuVersionNoDot}/${arch}/`;
-        const keyRingVersion = `1.0-1`;
+        const keyRingVersion = `1.1-1`;
         const keyRingUrl = `https://developer.download.nvidia.com/compute/cuda/repos/ubuntu${ubuntuVersionNoDot}/${arch}/cuda-keyring_${keyRingVersion}_all.deb`;
         const keyRingFilename = `cuda_keyring.deb`;
-        core.debug(`Pin filename: ${pinFilename}`);
-        core.debug(`Pin url: ${pinUrl}`);
         core.debug(`Keyring url: ${keyRingUrl}`);
-        core.debug(`Downloading keyring`);
+        // cuda-keyring installs the GPG key, the apt repository source list, and the
+        // pin file, so no separate pin download or add-apt-repository step is needed.
         yield (0, exec_1.exec)(`wget ${keyRingUrl} -O ${keyRingFilename}`);
         yield (0, exec_1.exec)(`sudo dpkg -i ${keyRingFilename}`);
-        core.debug('Adding CUDA Repository');
-        yield (0, exec_1.exec)(`wget ${pinUrl}`);
-        yield (0, exec_1.exec)(`sudo mv ${pinFilename} /etc/apt/preferences.d/cuda-repository-pin-600`);
-        yield (0, exec_1.exec)(`sudo add-apt-repository "deb ${repoUrl} /"`);
         yield (0, exec_1.exec)(`sudo apt-get update`);
     });
 }
