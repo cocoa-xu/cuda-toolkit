@@ -3,6 +3,7 @@ import * as core from '@actions/core'
 import {OSType, getOs, CUDAToolkit, DownloadType} from './platform'
 import {spawn} from 'child_process'
 import {getFileExtension} from './downloader'
+import {logDiskSpace} from './disk-space'
 import fs from 'fs'
 
 export async function spawnAsync(
@@ -158,6 +159,8 @@ export async function installCudnn(
     core.error(`Error during installation: ${error}`)
     throw error
   }
+
+  await logDiskSpace('after cuDNN unarchive')
 
   // await io.rmRF(cudnnArchivePath)
 

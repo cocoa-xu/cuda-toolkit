@@ -97,6 +97,76 @@ exports.aptInstall = aptInstall;
 
 /***/ }),
 
+/***/ 7836:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.logDiskSpace = void 0;
+const core = __importStar(__nccwpck_require__(2186));
+const platform_1 = __nccwpck_require__(9238);
+const fs_1 = __importDefault(__nccwpck_require__(7147));
+function gib(bytes) {
+    return (bytes / Math.pow(1024, 3)).toFixed(2);
+}
+function logDiskSpace(label) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const root = (yield (0, platform_1.getOs)()) === platform_1.OSType.windows
+                ? `${process.env.SystemDrive || 'C:'}\\`
+                : '/';
+            const statfs = fs_1.default.promises.statfs;
+            const stats = yield statfs(root);
+            const free = gib(stats.bavail * stats.bsize);
+            const total = gib(stats.blocks * stats.bsize);
+            core.info(`[disk] ${label}: ${free} GiB free / ${total} GiB total (${root})`);
+        }
+        catch (error) {
+            core.warning(`[disk] failed to read free space (${label}): ${error}`);
+        }
+    });
+}
+exports.logDiskSpace = logDiskSpace;
+
+
+/***/ }),
+
 /***/ 5587:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -392,6 +462,7 @@ const core = __importStar(__nccwpck_require__(2186));
 const platform_1 = __nccwpck_require__(9238);
 const child_process_1 = __nccwpck_require__(2081);
 const downloader_1 = __nccwpck_require__(5587);
+const disk_space_1 = __nccwpck_require__(7836);
 const fs_1 = __importDefault(__nccwpck_require__(7147));
 function spawnAsync(command, args, options) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -527,6 +598,7 @@ function installCudnn(cudnnArchivePath, directoryName, cudaPath) {
             core.error(`Error during installation: ${error}`);
             throw error;
         }
+        yield (0, disk_space_1.logDiskSpace)('after cuDNN unarchive');
         // await io.rmRF(cudnnArchivePath)
         let filename = directoryName;
         filename = filename.substring(0, filename.lastIndexOf(fileExt) - 1);
@@ -4373,6 +4445,7 @@ const method_1 = __nccwpck_require__(3607);
 const platform_1 = __nccwpck_require__(9238);
 const apt_installer_1 = __nccwpck_require__(4703);
 const downloader_1 = __nccwpck_require__(5587);
+const disk_space_1 = __nccwpck_require__(7836);
 const version_1 = __nccwpck_require__(8217);
 const installer_1 = __nccwpck_require__(1480);
 const update_path_1 = __nccwpck_require__(4985);
@@ -4448,14 +4521,18 @@ function run() {
             }
             else {
                 // Download
+                yield (0, disk_space_1.logDiskSpace)('before download');
                 const [executablePath, archivePath] = yield (0, downloader_1.download)(cuda_toolkit, methodParsed, arch, useGitHubCache, mirror);
+                yield (0, disk_space_1.logDiskSpace)('after download');
                 core.info(`Executable path: ${executablePath}`);
                 core.info(`Archive path: ${archivePath}`);
                 if (executablePath === '') {
                     throw new Error(`Executable path is empty, check if the toolkit version ${cuda_toolkit.cuda_version} is available for the specified method ${methodParsed} and arch ${arch}`);
                 }
                 // Install CUDA
+                yield (0, disk_space_1.logDiskSpace)('before installation');
                 yield (0, installer_1.install)(executablePath, cuda_toolkit, subPackagesArray, linuxLocalArgsArray);
+                yield (0, disk_space_1.logDiskSpace)('after installation');
                 cudnnArchivePath = archivePath;
             }
             // Add CUDA environment variables to GitHub environment variables
@@ -4473,6 +4550,7 @@ function run() {
                     directoryName = path_1.default.basename((_b = cuda_toolkit.cudnn_url) === null || _b === void 0 ? void 0 : _b.pathname);
                 }
                 yield (0, installer_1.installCudnn)(cudnnArchivePath, directoryName, cudaPath);
+                yield (0, disk_space_1.logDiskSpace)('after cuDNN installation');
             }
         }
         catch (error) {

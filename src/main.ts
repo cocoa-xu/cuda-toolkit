@@ -3,6 +3,7 @@ import {Method, parseMethod} from './method'
 import {OSType, getOs} from './platform'
 import {aptInstall, aptSetup, useApt} from './apt-installer'
 import {download} from './downloader'
+import {logDiskSpace} from './disk-space'
 import {getVersion} from './version'
 import {install, installCudnn} from './installer'
 import {updatePath} from './update-path'
@@ -87,6 +88,7 @@ async function run(): Promise<void> {
       core.debug(`Install result: ${installResult}`)
     } else {
       // Download
+      await logDiskSpace('before download')
       const [executablePath, archivePath]: [string, string] = await download(
         cuda_toolkit,
         methodParsed,
@@ -94,6 +96,7 @@ async function run(): Promise<void> {
         useGitHubCache,
         mirror
       )
+      await logDiskSpace('after download')
 
       core.info(`Executable path: ${executablePath}`)
       core.info(`Archive path: ${archivePath}`)
@@ -105,12 +108,14 @@ async function run(): Promise<void> {
       }
 
       // Install CUDA
+      await logDiskSpace('before installation')
       await install(
         executablePath,
         cuda_toolkit,
         subPackagesArray,
         linuxLocalArgsArray
       )
+      await logDiskSpace('after installation')
 
       cudnnArchivePath = archivePath
     }
@@ -133,6 +138,7 @@ async function run(): Promise<void> {
         directoryName = path.basename(cuda_toolkit.cudnn_url?.pathname)
       }
       await installCudnn(cudnnArchivePath, directoryName, cudaPath)
+      await logDiskSpace('after cuDNN installation')
     }
   } catch (error) {
     if (error instanceof Error) {
